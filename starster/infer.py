@@ -1,34 +1,45 @@
 """
-Functions for running inference.
+Functions for running the inference pipeline.
 """
 
+__all__ = (
+    "get_reconstructed_scene",
+)
 
-def symmetric_inference(model, img1, img2, device):
-    """
-    Run inference on a pair of images.
-    Return results w.r.t both images.
-    Returns r11, r21, r22, r12
+import copy
+import tempfile
 
-    img1, img2: dict (as in dust3r/utils/image.py:load_images)
-    """
-    shape1 = torch.from_numpy(img1['true_shape']).to(device, non_blocking=True)
-    shape2 = torch.from_numpy(img2['true_shape']).to(device, non_blocking=True)
-    img1 = img1['img'].to(device, non_blocking=True)
-    img2 = img2['img'].to(device, non_blocking=True)
+from dust3r.image_pairs import make_pairs
+from dust3r.utils.image import load_images
+from mast3r.cloud_opt.sparse_ga import sparse_global_alignment
+from mast3r.demo import SparseGAState
 
-    # compute encoder only once
-    feat1, feat2, pos1, pos2 = model._encode_image_pairs(img1, img2, shape1, shape2)
 
-    def decoder(feat1, feat2, pos1, pos2, shape1, shape2):
-        dec1, dec2 = model._decoder(feat1, pos1, feat2, pos2)
-        with torch.cuda.amp.autocast(enabled=False):
-            res1 = model._downstream_head(1, [tok.float() for tok in dec1], shape1)
-            res2 = model._downstream_head(2, [tok.float() for tok in dec2], shape2)
-        return res1, res2
+def get_reconstructed_scene(model, image_size, filelist, device):
+    imgs = load_images(filelist, size=image_size)
+    if len(imgs) == 1:
+        imgs = [imgs[0], copy.deepcopy(imgs[0])]
+        imgs[1]['idx'] = 1
+        filelist = [filelist[0], filelist[0] + '_2']
 
-    # decoder 1-2
-    res11, res21 = decoder(feat1, feat2, pos1, pos2, shape1, shape2)
-    # decoder 2-1
-    res22, res12 = decoder(feat2, feat1, pos2, pos1, shape2, shape1)
+    pairs = make_pairs(imgs, scene_graph="complete", prefilter=None, symmetrize=True)
 
-    return (res11, res21, res22, res12)
+    scene = sparse_global_alignment(
+        filelist,
+        pairs,
+        "/tmp",
+        model,
+        lr1=0.07,
+        niter1=500,
+        lr2=0.014,
+        niter2=200,
+        device=device,
+        opt_depth=False,
+        matching_conf_thr=5,
+        shared_intrinsics=False,
+    )
+
+    #outfile_name = tempfile.mktemp(suffix='_scene.glb', dir=outdir)
+    #scene_state = SparseGAState(scene, gradio_delete_cache, cache_dir, outfile_name)
+
+    return scene
