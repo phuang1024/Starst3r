@@ -31,8 +31,8 @@ def make_pair_indices(n: int, symmetric: bool = True) -> list[tuple[int, int]]:
         for j in range(i):
             pairs.append((i, j))
     if symmetric:
-        for i, j in pairs:
-            pairs.append((j, i))
+        for i in range(len(pairs)):
+            pairs.append((pairs[i][1], pairs[i][0]))
     return pairs
 
 

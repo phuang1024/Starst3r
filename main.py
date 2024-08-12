@@ -9,6 +9,7 @@ import starster
 from mast3r.model import AsymmetricMASt3R
 
 """
+# Test load image
 img = starster.load_image("/tmp/test.jpg")
 print(type(img))
 print(img.shape, img.dtype)
@@ -21,11 +22,15 @@ for file in dir.iterdir():
     if file.suffix.lower() == ".jpg":
         files.append(str(file))
 
-images = []
+imgs = []
 for file in files:
-    images.append(starster.load_image(file))
+    imgs.append(starster.load_image(file).to("cuda"))
 
-images = starster.prepare_images_for_mast3r(images)
+imgs_mast3r = starster.prepare_images_for_mast3r(imgs)
+
+pairs = starster.make_pair_indices(len(imgs), symmetric=True)
 
 model = AsymmetricMASt3R.from_pretrained("../models/MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric.pth").to("cuda")
-starster.get_reconstructed_scene(model, images, files, "cuda")
+
+#starster.reconstruct_scene(model, imgs, files, "cuda")
+starster.pairs_inference(model, imgs, pairs)
