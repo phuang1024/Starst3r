@@ -15,13 +15,7 @@ from mast3r.cloud_opt.sparse_ga import sparse_global_alignment
 from mast3r.demo import SparseGAState
 
 
-def get_reconstructed_scene(model, image_size, filelist, device):
-    imgs = load_images(filelist, size=image_size)
-    if len(imgs) == 1:
-        imgs = [imgs[0], copy.deepcopy(imgs[0])]
-        imgs[1]['idx'] = 1
-        filelist = [filelist[0], filelist[0] + '_2']
-
+def get_reconstructed_scene(model, imgs, filelist, device):
     pairs = make_pairs(imgs, scene_graph="complete", prefilter=None, symmetrize=True)
 
     scene = sparse_global_alignment(
