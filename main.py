@@ -24,13 +24,15 @@ for file in dir.iterdir():
 
 imgs = []
 for file in files:
-    imgs.append(starster.load_image(file).to("cuda"))
-
+    imgs.append(starster.load_image(file))
 imgs_mast3r = starster.prepare_images_for_mast3r(imgs)
-
+for i in range(len(imgs)):
+    imgs[i] = imgs[i].to("cuda")
 pairs = starster.make_pair_indices(len(imgs), symmetric=True)
 
 model = AsymmetricMASt3R.from_pretrained("../models/MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric.pth").to("cuda")
 
-#starster.reconstruct_scene(model, imgs, files, "cuda")
-starster.pairs_inference(model, imgs, pairs)
+scene = starster.reconstruct_scene(model, imgs_mast3r, files, "cuda")
+#starster.pairs_inference(model, imgs, pairs)
+
+print(len(scene.pts3d), scene.pts3d[0].shape)

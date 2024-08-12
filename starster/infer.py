@@ -13,21 +13,25 @@ import torch
 from tqdm import tqdm
 
 from dust3r.image_pairs import make_pairs
-from mast3r.cloud_opt.sparse_ga import sparse_global_alignment
+from mast3r.cloud_opt.sparse_ga import sparse_global_alignment, extract_correspondences
 
 
-def symmetric_inference(model, img1, img2):
+def symmetric_inference(model, img1, img2) -> dict[str, list[torch.Tensor]]:
     """
     Run inference on a pair of images w.r.t. both images.
 
     Returns x11, x21, x22, x12.
 
     x11, x21 are obtained w.r.t. img1.
-    x22, x12 w.r.t. img2.
+        x11 is img1 pointmap in img1 coords; x21 is img2 pointmap in img1 coords.
+    x22, x12 w.r.t. img2, similarly.
 
     Put model and images on the same device externally.
 
     img1, img2: Tensor, shape (3, H, W).
+    return: {"pts3d": [...,], "conf": [...,], "desc": [...,], "desc_conf": [...,]}
+        i.e. flattens keys of model output.
+        Each value is a list of 4, corresponding to x11, x21, x22, x12.
     """
     img1 = img1.unsqueeze(0)
     img2 = img2.unsqueeze(0)
@@ -49,34 +53,55 @@ def symmetric_inference(model, img1, img2):
     # decoder 2-1
     res22, res12 = decoder(feat2, feat1, pos2, pos1, shape2, shape1)
 
-    return (res11, res21, res22, res12)
+    # Flatten keys
+    results = [res11, res21, res22, res12]
+    keys = ("pts3d", "conf", "desc", "desc_conf")
+    ret = {}
+    for key in keys:
+        ret[key] = [r[key][0] for r in results]
+    return ret
 
 
 @torch.no_grad()
-def pairs_inference(model, imgs, pair_indices):
+def pairs_inference(model, imgs, pair_indices, verbose=False):
     """
-    Run inference on all pairs of images.
+    Run symmetric inference on all pairs of images.
+
+    Returns key-value map of pair indices to results.
+
+    return:
+    {
+        (i1, i2): {
+            "pts3d": ...,
+            "conf": ...,
+            "matching_score": ...,
+            "corres": ...,
+        },
+    }
+    See original function (mast3r/cloud_opt/sparse_ga.py:forward_mast3r) for details.
     """
-    for i1, i2 in tqdm(pair_indices):
-        res = symmetric_inference(model, imgs[i1], imgs[i2])
-        X11, X21, X22, X12 = [r['pts3d'][0] for r in res]
-        C11, C21, C22, C12 = [r['conf'][0] for r in res]
-        descs = [r['desc'][0] for r in res]
-        #qonfs = [r[desc_conf][0] for r in res]
+    ret = {}
 
-        # save
-        #torch.save(to_cpu((X11, C11, X21, C21)), mkdir_for(path1))
-        #torch.save(to_cpu((X22, C22, X12, C12)), mkdir_for(path2))
+    for i1, i2 in tqdm(pair_indices, disable=not verbose, desc="Pairs inference"):
+        output = symmetric_inference(model, imgs[i1], imgs[i2])
+        xs = output["pts3d"]
+        confs = output["conf"]
+        descs = output["desc"]
+        qonfs = output["desc_conf"]
 
-        # perform reciprocal matching
-        #corres = extract_correspondences(descs, qonfs, device=device, subsample=subsample)
+        corres = extract_correspondences(descs, qonfs, device=imgs[0].device, subsample=8)
+        # Geometric mean of confidences
+        conf_score = np.prod([c.mean().item() for c in confs]) ** (1 / 4)
+        matching_score = (float(conf_score), float(corres[2].sum()), len(corres[2]))
 
-        #conf_score = (C11.mean() * C12.mean() * C21.mean() * C22.mean()).sqrt().sqrt()
-        #matching_score = (float(conf_score), float(corres[2].sum()), len(corres[2]))
-        #if cache_path is not None:
-        #    torch.save((matching_score, corres), mkdir_for(path_corres))
+        ret[(i1, i2)] = {
+            "pts3d": xs,
+            "conf": confs,
+            "matching_score": matching_score,
+            "corres": corres,
+        }
 
-    return
+    return ret
 
 
 def reconstruct_scene(model, imgs, filelist, device):
