@@ -1,1 +1,7 @@
+build/*
+dist
+*.egg-info
+
+!setup.py
+
 data
