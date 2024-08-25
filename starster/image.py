@@ -1,7 +1,6 @@
 __all__ = (
     "make_pair_indices",
     "process_image",
-    "resize_image",
     "load_image",
     "prepare_images_for_mast3r",
 )
@@ -36,15 +35,19 @@ def make_pair_indices(n: int, symmetric: bool = True) -> list[tuple[int, int]]:
     return pairs
 
 
-def process_image(img: np.ndarray | torch.Tensor) -> torch.Tensor:
+def process_image(img: np.ndarray | torch.Tensor, size: int) -> torch.Tensor:
     """
     Process image to model requirements.
 
+    Resize longest edge of image to `size`.
     Crops (around center) HW to a multiple of 8.
 
     img: Shape (C,H,W), dtype uint8
     return: Tensor, shape (C,H,W), dtype float32
     """
+    new_size = [int(x * size / max(img.shape[1:])) for x in img.shape[1:]]
+    img = T.functional.resize(img, new_size, T.InterpolationMode.BICUBIC)
+
     cx = img.shape[2] // 2
     cy = img.shape[1] // 2
 
@@ -61,27 +64,12 @@ def process_image(img: np.ndarray | torch.Tensor) -> torch.Tensor:
     return img
 
 
-def resize_image(img: Image.Image, size: int) -> Image.Image:
-    """
-    Resize longest edge of image to `size`.
-    """
-    if max(img.size) > size:
-        interp = Image.LANCZOS
-    else:
-        interp = Image.BICUBIC
-    new_size = [int(x * size / max(img.size)) for x in img.size]
-    return img.resize(new_size, interp)
-
-
 def load_image(path: str | Path, size: int = 512) -> torch.Tensor:
     img = Image.open(path)
-    img = resize_image(img, size)
     img = exif_transpose(img)
     img = img.convert("RGB")
-    img = np.array(img)
-    img = _to_tensor(img)
-
-    img = process_image(img)
+    img = _to_tensor(np.array(img))
+    img = process_image(img, size)
     return img
 
 
