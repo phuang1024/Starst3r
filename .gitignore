@@ -4,6 +4,8 @@ build/*
 dist
 *.egg-info
 
+docs/_build
+
 !setup.py
 
 data
