@@ -8,6 +8,8 @@ __all__ = (
     "reconstruct_scene",
 )
 
+import tempfile
+
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -107,10 +109,11 @@ def pairs_inference(model, imgs, pair_indices, verbose=False):
 def reconstruct_scene(model, imgs, filelist, device):
     pairs = make_pairs(imgs, scene_graph="complete", prefilter=None, symmetrize=True)
 
+    tmpdir = tempfile.mkdtemp()
     scene = sparse_global_alignment(
         filelist,
         pairs,
-        "/tmp",
+        tmpdir,
         model,
         lr1=0.07,
         niter1=500,

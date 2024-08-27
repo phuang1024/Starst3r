@@ -7,5 +7,7 @@ Starst3r
    :caption: Contents:
    :hidden:
 
+   install.rst
+
 
 3D reconstruction framework using Mast3r.
