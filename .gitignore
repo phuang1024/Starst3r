@@ -6,6 +6,4 @@ dist
 
 docs/_build
 
-!setup.py
-
 data

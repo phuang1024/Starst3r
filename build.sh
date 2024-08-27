@@ -4,13 +4,15 @@ function build_python() {
     mkdir -p build
     cd build
 
+    cp ../setup.py .
+
     cp -r ../starster .
     rm starster/dust3r starster/mast3r
 
-    cp -r ../mast3r/mast3r starster/
-    cp -r ../mast3r/dust3r/dust3r starster/
-    rm starster/dust3r/dust3r
-    cp -r ../mast3r/dust3r/dust3r starster/dust3r/
+    cp -r ../mast3r/mast3r .
+    cp -r ../mast3r/dust3r/dust3r .
+    # Workaround for mast3r code; copy dust3r into itself.
+    cp -r ../mast3r/dust3r/dust3r dust3r/
 
     python setup.py sdist bdist_wheel
 }
@@ -28,6 +30,5 @@ if [ "$1" == "python" ]; then
 elif [ "$1" == "blender" ]; then
     build_blender
 else
-    build_python
-    build_blender
+    echo "Invalid usage."
 fi
