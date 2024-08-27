@@ -31,11 +31,40 @@ class StarsterProps(bpy.types.PropertyGroup):
     )
 
 
+class STARSTER_OT_ReconstructConfirm(bpy.types.Operator):
+    """Show confirmation dialog before calling reconstruct."""
+    bl_idname = "starster.reconstruct_confirm"
+    bl_label = "Reconstruct"
+    bl_description = "Reconstruct 3D model from 2D images using MASt3R."
+    bl_options = {"REGISTER", "UNDO"}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text="Reconstructing will take a while and will freeze Blender.")
+        layout.label(text="Please save your work before proceeding.")
+
+    def execute(self, context):
+        bpy.ops.starster.reconstruct()
+        return {"FINISHED"}
+
+
 class STARSTER_OT_Reconstruct(bpy.types.Operator):
     bl_idname = "starster.reconstruct"
     bl_label = "Reconstruct"
     bl_description = "Reconstruct 3D model from 2D images using MASt3R."
     bl_options = {"REGISTER", "UNDO"}
+
+    def verify_props(self, context):
+        if not os.path.isfile(context.scene.starster.model_path):
+            self.report({"ERROR"}, "Model file does not exist.")
+            return False
+        if not os.path.isdir(context.scene.starster.directory):
+            self.report({"ERROR"}, "Directory does not exist.")
+            return False
+        return True
 
     def infer_model(self, context):
         import starster
@@ -55,6 +84,9 @@ class STARSTER_OT_Reconstruct(bpy.types.Operator):
                 images.append(starster.load_image(str(file), res))
                 filepaths.append(str(file))
 
+        print("Found images:", filepaths)
+
+        print("Reconstruct.")
         images = starster.prepare_images_for_mast3r(images)
         model = AsymmetricMASt3R.from_pretrained(model_path).to(DEVICE)
         recons = starster.reconstruct_scene(model, images, filepaths, DEVICE)
@@ -62,6 +94,8 @@ class STARSTER_OT_Reconstruct(bpy.types.Operator):
         return recons
 
     def make_mesh(self, context, recons):
+        print("Making mesh.")
+
         i = 0
         while True:
             name = f"Starster.{i:03}"
@@ -81,6 +115,8 @@ class STARSTER_OT_Reconstruct(bpy.types.Operator):
         bm.free()
 
     def execute(self, context):
+        if not self.verify_props(context):
+            return {"CANCELLED"}
         recons = self.infer_model(context)
         self.make_mesh(context, recons)
         return {"FINISHED"}
@@ -104,12 +140,14 @@ class STARSTER_PT_MainPanel(bpy.types.Panel, BasePanel):
         layout.prop(scene.starster, "model_path")
         layout.prop(scene.starster, "directory")
         layout.prop(scene.starster, "resolution")
-        layout.operator("starster.reconstruct")
+
+        layout.operator("starster.reconstruct_confirm")
 
 
 classes = (
     StarsterProps,
 
+    STARSTER_OT_ReconstructConfirm,
     STARSTER_OT_Reconstruct,
 
     STARSTER_PT_MainPanel,
