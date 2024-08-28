@@ -2,6 +2,7 @@
 Bpy interface. Operators, props, and UI.
 """
 
+import os
 from pathlib import Path
 
 import bpy

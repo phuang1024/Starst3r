@@ -13,6 +13,9 @@ function build_python() {
     cp -r ../mast3r/dust3r/dust3r .
     # Workaround for mast3r code; copy dust3r into itself.
     cp -r ../mast3r/dust3r/dust3r dust3r/
+    cp -r ../mast3r/dust3r/croco/models .
+    # Workaround for missing init.
+    touch models/__init__.py
 
     python setup.py sdist bdist_wheel
 }

@@ -1,5 +1,8 @@
-import os
-import re
+"""
+Do not run this in the root directory.
+Run build.sh
+"""
+
 import setuptools
 
 
@@ -21,7 +24,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/phuang1024/Starst3r",
-    py_modules=["starster", "mast3r", "dust3r"],
+    py_modules=["starster", "mast3r", "dust3r", "croco"],
     packages=setuptools.find_packages(),
     install_requires=requirements,
 )
