@@ -6,9 +6,9 @@ sys.path.append("mast3r/dust3r/croco")
 from pathlib import Path
 
 import starster
-from mast3r.model import AsymmetricMASt3R
+import torch
 
-DEVICE = "cpu"
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 files = []
@@ -30,14 +30,17 @@ exit()
 imgs = []
 for file in files:
     imgs.append(starster.load_image(file, 224))
+
+"""
 imgs_mast3r = starster.prepare_images_for_mast3r(imgs)
 for i in range(len(imgs)):
     imgs[i] = imgs[i].to(DEVICE)
 pairs = starster.make_pair_indices(len(imgs), symmetric=True)
+"""
 
-model = AsymmetricMASt3R.from_pretrained("../models/MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric.pth").to(DEVICE)
+model = starster.Mast3rModel.from_pretrained("../models/MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric.pth").to(DEVICE)
 
-scene = starster.reconstruct_scene(model, imgs_mast3r, files, DEVICE)
+scene = starster.reconstruct_scene(model, imgs, files, DEVICE)
 #starster.pairs_inference(model, imgs, pairs)
 
 """
