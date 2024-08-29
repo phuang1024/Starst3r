@@ -8,4 +8,4 @@ Starst3r
 
    install.rst
 
-3D reconstruction framework using Mast3r.
+Fast 3D reconstruction framework using Mast3r.

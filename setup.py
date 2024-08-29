@@ -20,7 +20,7 @@ setuptools.setup(
     version="0.0.1",
     author="Patrick Huang",
     author_email="phuang1024@gmail.com",
-    description="Mast3r reconstruction and localization with 3DGS view rendering.",
+    description="Fast 3D reconstruction framework using Mast3r.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/phuang1024/Starst3r",
