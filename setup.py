@@ -1,19 +1,30 @@
 """
 Do not run this in the root directory.
 Run build.sh
+
+This script will be run from the ``build`` directory,
+so all paths are relative to that directory.
 """
 
 import setuptools
 
 
+def read_reqs(path):
+    with open(path, "r") as fp:
+        return fp.read().splitlines()
+
+
 with open("../README.md", "r") as fp:
     long_description = fp.read()
 
-"""
-with open("../requirements.txt", "r") as fp:
-    requirements = fp.read().strip().split("\n")
-"""
 requirements = []
+req_paths = (
+    "../requirements.txt",
+    "../mast3r/requirements.txt",
+    "../mast3r/dust3r/requirements.txt",
+)
+for path in req_paths:
+    requirements.extend(read_reqs(path))
 
 setuptools.setup(
     name="starst3r",
