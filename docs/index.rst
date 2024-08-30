@@ -8,5 +8,6 @@ Starst3r
 
    quickstart.rst
    install.rst
+   api.rst
 
 Fast 3D reconstruction framework using Mast3r.
