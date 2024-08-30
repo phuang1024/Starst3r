@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import bpy
+import bmesh
 
 
 def import_data(context):
@@ -9,7 +10,7 @@ def import_data(context):
     recons = infer_model(context)
 
     if props.import_as in ("VERTS", "DUPLI"):
-        make_mesh(recons, dupli=props.import_as == "DUPLI")
+        make_mesh(context, recons, dupli=props.import_as == "DUPLI")
 
 
 def infer_model(context):
@@ -39,20 +40,47 @@ def infer_model(context):
 
     return recons
 
-def make_mesh(recons, dupli=False):
+def make_mesh(context, recons, dupli=False):
+    print("Making mesh.")
+
     import starster
 
-    print("Making mesh.")
+    props = context.scene.starster
+    dsize = props.dupli_size
+
+    num_verts = starster.num_verts(recons)
+    if props.import_as == "DUPLI":
+        num_verts *= 4
 
     mesh = bpy.data.meshes.new("Starster")
     obj = bpy.data.objects.new("Starster", mesh)
     bpy.context.collection.objects.link(obj)
 
-    mesh.vertices.add(starster.num_verts(recons))
-    vert_colors = mesh.attributes.new(name="Color", type="FLOAT_COLOR", domain="POINT")
+    # Make mesh
+    bm = bmesh.new()
+    for loc, col in starster.iterate_verts(recons):
+        if props.import_as == "DUPLI":
+            v1 = bm.verts.new((loc[0] - dsize, loc[1] - dsize, loc[2] - dsize))
+            v2 = bm.verts.new((loc[0] + dsize, loc[1] - dsize, loc[2] - dsize))
+            v3 = bm.verts.new((loc[0], loc[1] + dsize, loc[2] - dsize))
+            v4 = bm.verts.new((loc[0], loc[1], loc[2] + dsize))
+            bm.faces.new((v1, v2, v3))
+            bm.faces.new((v1, v2, v4))
+            bm.faces.new((v1, v3, v4))
+            bm.faces.new((v2, v3, v4))
+        else:
+            bm.verts.new((loc[0], loc[1], loc[2]))
 
+    bm.to_mesh(mesh)
+
+    # Make vertex colors
+    vert_colors = mesh.attributes.new(name="Color", type="FLOAT_COLOR", domain="POINT")
     i = 0
     for loc, col in starster.iterate_verts(recons):
-        mesh.vertices[i].co = (loc[0], loc[1], loc[2])
-        vert_colors.data[i].color = (col[0], col[1], col[2], 1)
-        i += 1
+        if props.import_as == "DUPLI":
+            for j in range(4):
+                vert_colors.data[i + j].color = (col[0], col[1], col[2], 1)
+            i += 4
+        else:
+            vert_colors.data[i].color = (col[0], col[1], col[2], 1)
+            i += 1

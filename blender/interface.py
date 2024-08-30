@@ -41,6 +41,13 @@ class StarsterProps(bpy.types.PropertyGroup):
         ],
     )
 
+    dupli_size: bpy.props.FloatProperty(
+        name="Dupli Size",
+        description="Size of dupli verts.",
+        default=0.01,
+        min=0.0
+    )
+
 
 class STARSTER_OT_ReconstructConfirm(bpy.types.Operator):
     """Show confirmation dialog before calling reconstruct."""
@@ -99,12 +106,14 @@ class STARSTER_PT_MainPanel(bpy.types.Panel, BasePanel):
 
     def draw(self, context):
         layout = self.layout
-        scene = context.scene
+        props = context.scene.starster
 
-        layout.prop(scene.starster, "model_path")
-        layout.prop(scene.starster, "directory")
-        layout.prop(scene.starster, "resolution")
-        layout.prop(scene.starster, "import_as")
+        layout.prop(props, "model_path")
+        layout.prop(props, "directory")
+        layout.prop(props, "resolution")
+        layout.prop(props, "import_as")
+        if props.import_as == "DUPLI":
+            layout.prop(props, "dupli_size")
 
         layout.operator("starster.reconstruct_confirm")
 
