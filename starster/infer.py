@@ -8,16 +8,18 @@ __all__ = (
     "reconstruct_scene",
 )
 
+import os
 import tempfile
 
-import numpy as np
-import torch
-from tqdm import tqdm
+if "READTHEDOCS" not in os.environ:
+    import numpy as np
+    import torch
+    from tqdm import tqdm
 
-from dust3r.image_pairs import make_pairs
-from mast3r.cloud_opt.sparse_ga import sparse_global_alignment, extract_correspondences
+    from dust3r.image_pairs import make_pairs
+    from mast3r.cloud_opt.sparse_ga import sparse_global_alignment, extract_correspondences
 
-from .image import prepare_images_for_mast3r
+    from .image import prepare_images_for_mast3r
 
 
 def symmetric_inference(model, img1, img2) -> dict[str, list[torch.Tensor]]:

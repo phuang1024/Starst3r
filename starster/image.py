@@ -6,16 +6,18 @@ __all__ = (
     "prepare_images_for_mast3r",
 )
 
+import os
 from pathlib import Path
 
-import numpy as np
-import torch
-import torchvision.transforms as T
-from PIL import Image
-from PIL.ImageOps import exif_transpose
+if "READTHEDOCS" not in os.environ:
+    import numpy as np
+    import torch
+    import torchvision.transforms as T
+    from PIL import Image
+    from PIL.ImageOps import exif_transpose
 
-_to_tensor = T.ToTensor()
-_normalize = T.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
+    _to_tensor = T.ToTensor()
+    _normalize = T.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
 
 
 def make_pair_indices(n: int, symmetric: bool = True) -> list[tuple[int, int]]:
