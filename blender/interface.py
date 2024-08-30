@@ -3,10 +3,10 @@ Bpy interface. Operators, props, and UI.
 """
 
 import os
-from pathlib import Path
 
 import bpy
-import bmesh
+
+from .importer import import_data
 
 
 class StarsterProps(bpy.types.PropertyGroup):
@@ -29,6 +29,16 @@ class StarsterProps(bpy.types.PropertyGroup):
         description="Resolution of images.",
         default=224,
         min=0
+    )
+
+    import_as: bpy.props.EnumProperty(
+        name="Import As",
+        description="Type of object to import as.",
+        items=[
+            ("VERTS", "Vertices", "Import as vertices."),
+            ("DUPLI", "DupliVerts", "Create small mesh at each vert for rendering."),
+            ("POINT_CLOUD", "Point Cloud", "Import as point cloud object (in experimental)."),
+        ],
     )
 
 
@@ -59,67 +69,20 @@ class STARSTER_OT_Reconstruct(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def verify_props(self, context):
-        if not os.path.isfile(context.scene.starster.model_path):
+        props = context.scene.starster
+
+        if not os.path.isfile(props.model_path):
             self.report({"ERROR"}, "Model file does not exist.")
             return False
-        if not os.path.isdir(context.scene.starster.directory):
+        if not os.path.isdir(props.directory):
             self.report({"ERROR"}, "Directory does not exist.")
             return False
         return True
 
-    def infer_model(self, context):
-        import starster
-        import torch
-        from mast3r.model import AsymmetricMASt3R
-
-        DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-        model_path = context.scene.starster.model_path
-        dir = Path(bpy.path.abspath(context.scene.starster.directory))
-        res = context.scene.starster.resolution
-
-        images = []
-        filepaths = []
-        for file in dir.iterdir():
-            if file.suffix.lower() in (".jpg", ".jpeg", ".png"):
-                images.append(starster.load_image(str(file), res))
-                filepaths.append(str(file))
-
-        print("Found images:", filepaths)
-
-        print("Reconstruct.")
-        images = starster.prepare_images_for_mast3r(images)
-        model = AsymmetricMASt3R.from_pretrained(model_path).to(DEVICE)
-        recons = starster.reconstruct_scene(model, images, filepaths, DEVICE)
-
-        return recons
-
-    def make_mesh(self, context, recons):
-        print("Making mesh.")
-
-        i = 0
-        while True:
-            name = f"Starster.{i:03}"
-            if name not in bpy.data.objects:
-                break
-            i += 1
-
-        mesh = bpy.data.meshes.new(name)
-        obj = bpy.data.objects.new(name, mesh)
-        bpy.context.collection.objects.link(obj)
-
-        bm = bmesh.new()
-        for pts in recons.pts3d:
-            for pt in pts:
-                bm.verts.new(pt)
-        bm.to_mesh(mesh)
-        bm.free()
-
     def execute(self, context):
         if not self.verify_props(context):
             return {"CANCELLED"}
-        recons = self.infer_model(context)
-        self.make_mesh(context, recons)
+        import_data(context)
         return {"FINISHED"}
 
 
@@ -141,6 +104,7 @@ class STARSTER_PT_MainPanel(bpy.types.Panel, BasePanel):
         layout.prop(scene.starster, "model_path")
         layout.prop(scene.starster, "directory")
         layout.prop(scene.starster, "resolution")
+        layout.prop(scene.starster, "import_as")
 
         layout.operator("starster.reconstruct_confirm")
 
