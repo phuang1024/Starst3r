@@ -14,7 +14,9 @@ The package includes four Python modules:
 - ``dust3r``: The Dust3r codebase.
 - ``models``: Croco v2 codebase.
 
-FOr most cases, your script will only use the ``starster`` module.
+For most cases, your script will only use the ``starster`` module.
+
+See :ref:`Quickstart` for more information on how to use the library.
 
 Building
 --------

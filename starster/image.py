@@ -2,6 +2,7 @@ __all__ = (
     "make_pair_indices",
     "process_image",
     "load_image",
+    "load_images",
     "prepare_images_for_mast3r",
 )
 
@@ -71,6 +72,13 @@ def load_image(path: str | Path, size: int = 512) -> torch.Tensor:
     img = _to_tensor(np.array(img))
     img = process_image(img, size)
     return img
+
+
+def load_images(paths: list[str | Path], size: int = 512) -> list[torch.Tensor]:
+    """
+    Calls ``load_image`` on each path.
+    """
+    return [load_image(p, size) for p in paths]
 
 
 def prepare_images_for_mast3r(imgs: list[torch.Tensor]):

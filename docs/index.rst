@@ -6,6 +6,7 @@ Starst3r
    :caption: Contents:
    :hidden:
 
+   quickstart.rst
    install.rst
 
 Fast 3D reconstruction framework using Mast3r.
