@@ -8,18 +8,16 @@ __all__ = (
     "reconstruct_scene",
 )
 
-import os
 import tempfile
 
-if "READTHEDOCS" not in os.environ:
-    import numpy as np
-    import torch
-    from tqdm import tqdm
+import numpy as np
+import torch
+from tqdm import tqdm
 
-    from dust3r.image_pairs import make_pairs
-    from mast3r.cloud_opt.sparse_ga import sparse_global_alignment, extract_correspondences
+from dust3r.image_pairs import make_pairs
+from mast3r.cloud_opt.sparse_ga import sparse_global_alignment, extract_correspondences
 
-    from .image import prepare_images_for_mast3r
+from .image import prepare_images_for_mast3r
 
 
 def symmetric_inference(model, img1, img2) -> dict[str, list[torch.Tensor]]:
@@ -29,13 +27,13 @@ def symmetric_inference(model, img1, img2) -> dict[str, list[torch.Tensor]]:
     Returns x11, x21, x22, x12.
 
     x11, x21 are obtained w.r.t. img1.
-        x11 is img1 pointmap in img1 coords; x21 is img2 pointmap in img1 coords.
-    x22, x12 w.r.t. img2, similarly.
+    - x11 is img1 pointmap in img1 coords; x21 is img2 pointmap in img1 coords.
+    - x22, x12 w.r.t. img2, similarly.
 
-    Put model and images on the same device externally.
+    Put model and images on the same torch device externally.
 
-    img1, img2: Tensor, shape (3, H, W).
-    return: {"pts3d": [...,], "conf": [...,], "desc": [...,], "desc_conf": [...,]}
+    :param img1, img2: Tensor, shape (3, H, W).
+    :return: ``{"pts3d": [...,], "conf": [...,], "desc": [...,], "desc_conf": [...,]}``
         i.e. flattens keys of model output.
         Each value is a list of 4, corresponding to x11, x21, x22, x12.
     """
@@ -75,7 +73,7 @@ def pairs_inference(model, imgs, pair_indices, verbose=False):
 
     Returns key-value map of pair indices to results.
 
-    return:
+    :return:
     {
         (i1, i2): {
             "pts3d": ...,
@@ -112,12 +110,12 @@ def pairs_inference(model, imgs, pair_indices, verbose=False):
 
 def reconstruct_scene(model, imgs, filelist, device):
     """
-    model: Model instance.
-    imgs: List of images from load_image.
+    :param model: Model instance.
+    :param imgs: List of images from load_image.
         Tensor shape (C,H,W), dtype float32.
-    filelist: List of image paths corresponding to each image.
+    :param filelist: List of image paths corresponding to each image.
         Due to Mast3r legacy code, this is required.
-    device: Device to run on.
+    :param device: Device to run on.
     """
     imgs = prepare_images_for_mast3r(imgs)
     pairs = make_pairs(imgs, scene_graph="complete", prefilter=None, symmetrize=True)

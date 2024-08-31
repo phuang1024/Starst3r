@@ -6,18 +6,16 @@ __all__ = (
     "prepare_images_for_mast3r",
 )
 
-import os
 from pathlib import Path
 
-if "READTHEDOCS" not in os.environ:
-    import numpy as np
-    import torch
-    import torchvision.transforms as T
-    from PIL import Image
-    from PIL.ImageOps import exif_transpose
+import numpy as np
+import torch
+import torchvision.transforms as T
+from PIL import Image
+from PIL.ImageOps import exif_transpose
 
-    _to_tensor = T.ToTensor()
-    _normalize = T.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
+_to_tensor = T.ToTensor()
+_normalize = T.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
 
 
 def make_pair_indices(n: int, symmetric: bool = True) -> list[tuple[int, int]]:
@@ -25,8 +23,8 @@ def make_pair_indices(n: int, symmetric: bool = True) -> list[tuple[int, int]]:
     Generate all pairs of indices for `n` elements.
 
     Fully connected graph; i.e. (i, j) exists for i, j < n and:
-    Symmetric: i != j;
-    Not symmetric: i < j.
+    - Symmetric: i != j;
+    - Not symmetric: i < j.
     """
     pairs = []
     for i in range(n):
@@ -45,8 +43,8 @@ def process_image(img: np.ndarray | torch.Tensor, size: int) -> torch.Tensor:
     Resize longest edge of image to `size`.
     Crops (around center) HW to a multiple of 8.
 
-    img: Shape (C,H,W), dtype uint8
-    return: Tensor, shape (C,H,W), dtype float32
+    :param img: Shape (C,H,W), dtype uint8
+    :return: Tensor, shape (C,H,W), dtype float32
     """
     new_size = [int(x * size / max(img.shape[1:])) for x in img.shape[1:]]
     img = T.functional.resize(img, new_size, T.InterpolationMode.BICUBIC)
@@ -88,6 +86,7 @@ def prepare_images_for_mast3r(imgs: list[torch.Tensor]):
     Returns image format as supported by mast3r legacy code.
 
     Each image is
+
     {
         img: Tensor image, shape (1, 3, H, W)
         true_shape: [[H, W]]

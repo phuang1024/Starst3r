@@ -7,4 +7,7 @@ sphinx:
   configuration: docs/conf.py
 python:
   install:
+    - requirements: requirements.txt
     - requirements: docs/requirements.txt
+    - requirements: mast3r/requirements.txt
+    - requirements: mast3r/dust3r/requirements.txt

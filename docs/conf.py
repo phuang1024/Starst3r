@@ -6,6 +6,12 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import sys
+sys.path.append("..")
+sys.path.append("../mast3r")
+sys.path.append("../mast3r/dust3r")
+sys.path.append("../mast3r/dust3r/croco")
+
 project = 'Starst3r'
 copyright = '2024, Patrick Huang'
 author = 'Patrick Huang'

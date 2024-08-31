@@ -1,7 +1,17 @@
 Quickstart
 ==========
 
-Reconstruct scene:
+Download model
+--------------
+
+Download the pretrained Mast3r model.
+
+https://github.com/naver/mast3r/?tab=readme-ov-file#checkpoints
+
+Starst3r uses the same Mast3r model internally.
+
+Reconstruct scene
+-----------------
 
 .. code-block:: python
 
@@ -24,22 +34,23 @@ Reconstruct scene:
    # Reconstruct scene
    scene = starster.reconstruct_scene(model, imgs, files, device)
 
-Use results:
+Use results
+-----------
 
 .. code-block:: python
 
-   # Iterate with respect to each camera.
+   # Iterate point clouds with respect to each camera.
    num_cameras = len(scene.pts3d)
    for i in range(num_cameras):
-       # pts shape is (N, 3); XYZ of each point.
+       # Point cloud: pts shape is (N, 3); XYZ of each point.
        pts = scene.pts3d[i]
        print(f"Points from camera {i}: {pts.shape}")
 
-       # Color is (N, 3); RGB of each point.
+       # Point colors: shape is (N, 3); RGB of each point.
        colors = scene.pts3d_colors[i]
        print(f"Colors from camera {i}: {colors.shape}")
 
-   # Iterate all points.
+   # Iterate all points of all cameras.
    for pt, color in starster.iterate_verts(scene):
        ...
 
