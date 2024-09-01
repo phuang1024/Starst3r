@@ -12,3 +12,5 @@ Starst3r
    blender.rst
 
 Fast 3D reconstruction framework using Mast3r.
+
+.. image:: ./images/demo.gif
