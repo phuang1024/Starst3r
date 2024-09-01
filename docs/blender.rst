@@ -35,3 +35,7 @@ Select the import mode.
   object is currently a Blender experimental feature.
 
 .. image:: ./images/BlenderRecons.jpg
+
+To use vertex colors in the shader, you can use the Attribute node:
+
+.. image:: ./images/BlenderMaterial.jpg
