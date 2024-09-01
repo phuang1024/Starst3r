@@ -11,6 +11,8 @@ def import_data(context):
 
     if props.import_as in ("VERTS", "DUPLI"):
         make_mesh(context, recons, dupli=props.import_as == "DUPLI")
+    elif props.import_as == "POINT_CLOUD":
+        raise NotImplementedError("Point cloud import not implemented.")
 
 
 def infer_model(context):
