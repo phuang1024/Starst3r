@@ -50,7 +50,9 @@ def make_mesh(context, recons, dupli=False):
     props = context.scene.starster
     dsize = props.dupli_size
 
-    num_verts = starster.num_verts(recons)
+    pts, colors = recons.pts_dense_flat()
+
+    num_verts = pts.shape[0]
     if props.import_as == "DUPLI":
         num_verts *= 4
 
@@ -60,7 +62,7 @@ def make_mesh(context, recons, dupli=False):
 
     # Make mesh
     bm = bmesh.new()
-    for loc, col in starster.iterate_verts(recons):
+    for loc, col in zip(pts, colors):
         if props.import_as == "DUPLI":
             v1 = bm.verts.new((loc[0] - dsize, loc[1] - dsize, loc[2] - dsize))
             v2 = bm.verts.new((loc[0] + dsize, loc[1] - dsize, loc[2] - dsize))
@@ -78,7 +80,7 @@ def make_mesh(context, recons, dupli=False):
     # Make vertex colors
     vert_colors = mesh.attributes.new(name="Color", type="FLOAT_COLOR", domain="POINT")
     i = 0
-    for loc, col in starster.iterate_verts(recons):
+    for loc, col in zip(pts, colors):
         if props.import_as == "DUPLI":
             for j in range(4):
                 vert_colors.data[i + j].color = (col[0], col[1], col[2], 1)
