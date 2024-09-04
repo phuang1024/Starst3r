@@ -18,6 +18,7 @@ from dust3r.image_pairs import make_pairs
 from mast3r.cloud_opt.sparse_ga import sparse_global_alignment, extract_correspondences
 
 from .image import prepare_images_for_mast3r
+from .scene import PointCloud
 
 
 def symmetric_inference(model, img1, img2) -> dict[str, list[torch.Tensor]]:
@@ -108,7 +109,7 @@ def pairs_inference(model, imgs, pair_indices, verbose=False):
     return ret
 
 
-def reconstruct_scene(model, imgs, filelist, device):
+def reconstruct_scene(model, imgs, filelist, device, tmpdir=None):
     """
     :param model: Model instance.
     :param imgs: List of images from load_image.
@@ -116,11 +117,13 @@ def reconstruct_scene(model, imgs, filelist, device):
     :param filelist: List of image paths corresponding to each image.
         Due to Mast3r legacy code, this is required.
     :param device: Device to run on.
+    :param tmpdir: Temp directory. If None, a new one is created.
     """
     imgs = prepare_images_for_mast3r(imgs)
     pairs = make_pairs(imgs, scene_graph="complete", prefilter=None, symmetrize=True)
 
-    tmpdir = tempfile.mkdtemp()
+    if tmpdir is None:
+        tmpdir = tempfile.mkdtemp()
     scene = sparse_global_alignment(
         filelist,
         pairs,
@@ -135,5 +138,7 @@ def reconstruct_scene(model, imgs, filelist, device):
         matching_conf_thr=5,
         shared_intrinsics=False,
     )
+
+    scene = PointCloud(scene)
 
     return scene

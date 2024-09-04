@@ -40,8 +40,10 @@ pairs = starster.make_pair_indices(len(imgs), symmetric=True)
 
 model = starster.Mast3rModel.from_pretrained("../models/MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric.pth").to(DEVICE)
 
-scene = starster.reconstruct_scene(model, imgs, files, DEVICE)
+scene = starster.reconstruct_scene(model, imgs, files, DEVICE, "/tmp/starster_main_test")
 #starster.pairs_inference(model, imgs, pairs)
+
+#pts3d, _, confs = to_numpy(tsdf.get_dense_pts3d(clean_depth=clean_depth))
 
 """
 import numpy as np
