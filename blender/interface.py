@@ -6,7 +6,7 @@ import os
 
 import bpy
 
-from .importer import import_data
+from .importer import import_main
 
 
 class StarsterProps(bpy.types.PropertyGroup):
@@ -39,6 +39,7 @@ class StarsterProps(bpy.types.PropertyGroup):
             ("DUPLI", "DupliVerts", "Create small mesh at each vert for rendering."),
             ("POINT_CLOUD", "Point Cloud", "Import as point cloud object (in experimental)."),
         ],
+        default="DUPLI",
     )
 
     dupli_size: bpy.props.FloatProperty(
@@ -46,6 +47,12 @@ class StarsterProps(bpy.types.PropertyGroup):
         description="Size of dupli verts.",
         default=0.01,
         min=0.0
+    )
+
+    make_material: bpy.props.BoolProperty(
+        name="Make Material",
+        description="Make material for object.",
+        default=True
     )
 
 
@@ -89,7 +96,7 @@ class STARSTER_OT_Reconstruct(bpy.types.Operator):
     def execute(self, context):
         if not self.verify_props(context):
             return {"CANCELLED"}
-        import_data(context)
+        import_main(context)
         return {"FINISHED"}
 
 
@@ -114,6 +121,7 @@ class STARSTER_PT_MainPanel(bpy.types.Panel, BasePanel):
         layout.prop(props, "import_as")
         if props.import_as == "DUPLI":
             layout.prop(props, "dupli_size")
+        layout.prop(props, "make_material")
 
         layout.operator("starster.reconstruct_confirm")
 

@@ -1,16 +1,23 @@
+import tempfile
 from pathlib import Path
 
 import bpy
 import bmesh
 
+tmp_dir = tempfile.mkdtemp()
 
-def import_data(context):
+
+def import_main(context):
     props = context.scene.starster
 
     recons = infer_model(context)
 
     if props.import_as in ("VERTS", "DUPLI"):
-        make_mesh(context, recons, dupli=props.import_as == "DUPLI")
+        obj = make_mesh(context, recons, dupli=props.import_as == "DUPLI")
+
+        if props.make_material:
+            make_material(obj)
+
     elif props.import_as == "POINT_CLOUD":
         raise NotImplementedError("Point cloud import not implemented.")
 
@@ -38,7 +45,7 @@ def infer_model(context):
 
     print("Reconstruct.")
     model = starster.Mast3rModel.from_pretrained(model_path).to(DEVICE)
-    recons = starster.reconstruct_scene(model, images, filepaths, DEVICE)
+    recons = starster.reconstruct_scene(model, images, filepaths, DEVICE, tmp_dir)
 
     return recons
 
@@ -88,3 +95,33 @@ def make_mesh(context, recons, dupli=False):
         else:
             vert_colors.data[i].color = (col[0], col[1], col[2], 1)
             i += 1
+
+    # Shade smooth
+    obj.data.shade_smooth()
+
+    return obj
+
+
+def make_material(obj):
+    mat = bpy.data.materials.new(obj.name)
+    mat.use_nodes = True
+
+    tree = mat.node_tree
+    tree.nodes.clear()
+
+    output = tree.nodes.new("ShaderNodeOutputMaterial")
+    output.location = 400, 0
+
+    shader = tree.nodes.new("ShaderNodeBsdfPrincipled")
+    shader.location = 0, 0
+    tree.links.new(output.inputs[0], shader.outputs[0])
+
+    attr = tree.nodes.new("ShaderNodeAttribute")
+    attr.location = -400, 0
+    attr.attribute_name = "Color"
+    tree.links.new(shader.inputs[0], attr.outputs[0])
+    # Emission color
+    tree.links.new(shader.inputs[26], attr.outputs[0])
+    shader.inputs[27].default_value = 1.0
+
+    obj.data.materials.append(mat)
