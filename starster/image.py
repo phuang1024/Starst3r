@@ -38,10 +38,10 @@ def make_pair_indices(n: int, symmetric: bool = True) -> list[tuple[int, int]]:
 
 def process_image(img: np.ndarray | torch.Tensor, size: int) -> torch.Tensor:
     """
-    Process image to model requirements.
+    Preprocess image to model requirements.
 
     Resize longest edge of image to `size`.
-    Crops (around center) HW to a multiple of 8.
+    Crops (around center) H and W to a multiple of 8.
 
     :param img: Shape (C,H,W), dtype uint8
     :return: Tensor, shape (C,H,W), dtype float32
@@ -66,6 +66,14 @@ def process_image(img: np.ndarray | torch.Tensor, size: int) -> torch.Tensor:
 
 
 def load_image(path: str | Path, size: int = 512) -> torch.Tensor:
+    """
+    Load and process image.
+
+    I.e. calls `process_image` on the loaded image.
+
+    :param path: Path to image.
+    :param size: Resize longest edge to this.
+    """
     img = Image.open(path)
     img = exif_transpose(img)
     img = img.convert("RGB")

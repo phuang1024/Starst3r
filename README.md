@@ -1,6 +1,6 @@
 # Starst3r
 
- preview image.png
+![](docs/images/Poster.jpg)
 
 ![](docs/images/demo.gif)
 

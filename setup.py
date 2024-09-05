@@ -2,7 +2,7 @@
 Do not run this in the root directory.
 Run build.sh
 
-This script will be run from the ``build`` directory,
+This script will be copied and run from the ``build`` directory,
 so all paths are relative to that directory.
 """
 
