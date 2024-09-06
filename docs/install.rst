@@ -31,12 +31,14 @@ The Python module can be built and installed from source.
 This will create the appropriate file structure and build the Python package in
 ``build/dist``.
 
-Blender
--------
+Blender installation
+--------------------
 
 Starst3r can be used as a Blender add-on.
 
 Due to the nature of Blender Python, the installation procedure is complicated.
+
+**Please follow the instructions carefully.**
 
 1. Configure scripts
 ^^^^^^^^^^^^^^^^^^^^
@@ -50,7 +52,7 @@ modules from.
 Create a new directory where you would like. **Create an extra directory
 ``modules`` inside your chosen directory.**
 
-So, if you use ``/home/user/BlenderScripts``, there should be a directory
+So, if you choose to use ``/home/user/BlenderScripts``, you should create a directory
 ``/home/user/BlenderScripts/modules``.
 
 In Blender's preferences, add a script path and set it to your chosen directory,

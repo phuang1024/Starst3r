@@ -9,6 +9,8 @@ interface.
    The Blender add-on is still in development.
    Features and quality will improve over time.
 
+See :ref:`Blender installation` for installation instructions.
+
 Reconstruction
 --------------
 
