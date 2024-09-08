@@ -44,3 +44,34 @@ class PointCloud:
         pts3d = torch.cat([p[0] for p in pts], dim=0)
         colors = torch.cat([p[1] for p in pts], dim=0)
         return pts3d, colors
+
+    def c2w(self) -> torch.Tensor:
+        """
+        Returns camera-to-world transformation matrix.
+
+        Shape (C, 4, 4).
+
+        Alias of ``self.sparse_ga.cam2w``.
+        """
+        return self.sparse_ga.cam2w
+
+    def w2c(self) -> torch.Tensor:
+        """
+        Returns world-to-camera transformation matrix.
+
+        Shape (C, 4, 4).
+
+        Alias of ``self.sparse_ga.w2cam``.
+        """
+        # TODO check if correct
+        return torch.inverse(self.c2w())
+
+    def intrinsics(self) -> torch.Tensor:
+        """
+        Returns camera intrinsics.
+
+        Shape (C, 3, 3).
+
+        Alias of ``self.sparse_ga.intrinsics``.
+        """
+        return self.sparse_ga.intrinsics
