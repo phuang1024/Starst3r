@@ -53,3 +53,12 @@ for i, pts in enumerate(scene.pts3d):
 
 print(len(scene.pts3d), scene.pts3d[0].shape)
 """
+
+import numpy as np
+import cv2
+
+gs = starster.GSTrainer(scene)
+gs.init_gaussians()
+render = gs.render_scene_views(224, 224)
+for i, img in enumerate(render[0]):
+    cv2.imwrite(f"{i}.png", (img.detach().cpu().numpy()[..., ::-1] * 255).astype(np.uint8))

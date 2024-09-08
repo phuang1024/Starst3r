@@ -35,7 +35,7 @@ class PointCloud:
         pts, _, confs = self.sparse_ga.get_dense_pts3d(clean_depth=True)
         for i in range(self.num_cams):
             colors = torch.tensor(self.sparse_ga.imgs[i]).reshape(-1, 3)
-            mask = (confs[i] > conf_thres).reshape(-1)
+            mask = (confs[i] > conf_thres).reshape(-1).cpu()
             ret.append((pts[i][mask], colors[mask]))
         return ret
 
@@ -64,7 +64,14 @@ class PointCloud:
         Alias of ``self.sparse_ga.w2cam``.
         """
         # TODO check if correct
-        return torch.inverse(self.c2w())
+        c2w = self.c2w()
+        mult = torch.tensor([
+            [1, 0, 0, 0],
+            [0, -1, 0, 0],
+            [0, 0, -1, 0],
+            [0, 0, 0, 1],
+        ], device=c2w.device)
+        return torch.inverse(c2w * mult)
 
     def intrinsics(self) -> torch.Tensor:
         """
