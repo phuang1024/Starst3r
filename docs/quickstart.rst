@@ -1,6 +1,8 @@
 Quickstart
 ==========
 
+First see :ref:`Installation`.
+
 Download model
 --------------
 

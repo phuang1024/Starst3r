@@ -15,3 +15,6 @@ Fast 3D reconstruction framework using Mast3r.
 .. image:: ./images/Poster.jpg
 
 .. image:: ./images/demo.gif
+
+1. :ref:`Installation`
+2. :ref:`Quickstart`

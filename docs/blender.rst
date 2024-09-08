@@ -26,7 +26,7 @@ Reconstruct a scene from images and import a point cloud.
 
 Select the images directory, model weights file, and image resolution.
 
-.. image:: ./images/BlenderReconsUi.jpg
+.. image:: ./images/BlenderUi.jpg
 
 Select the import mode.
 
@@ -36,7 +36,7 @@ Select the import mode.
 - Point Cloud: Add a Point Cloud object. TODO: Not implemented yet. Point Cloud
   object is currently a Blender experimental feature.
 
-.. image:: ./images/BlenderRecons.jpg
+.. image:: ./images/Reconstruct.jpg
 
 To use vertex colors in the shader, you can use the Attribute node:
 
