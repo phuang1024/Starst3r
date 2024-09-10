@@ -1,3 +1,4 @@
+gsplat
 numpy
 pillow
 torch
