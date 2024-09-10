@@ -8,6 +8,8 @@ Starst3r
 
    quickstart.rst
    install.rst
+   mast3r.rst
+   3dgs.rst
    blender.rst
    api.rst
 
