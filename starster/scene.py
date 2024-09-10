@@ -63,15 +63,7 @@ class PointCloud:
 
         Alias of ``self.sparse_ga.w2cam``.
         """
-        # TODO check if correct
-        c2w = self.c2w()
-        mult = torch.tensor([
-            [1, 0, 0, 0],
-            [0, -1, 0, 0],
-            [0, 0, -1, 0],
-            [0, 0, 0, 1],
-        ], device=c2w.device)
-        return torch.inverse(c2w * mult)
+        return torch.inverse(self.c2w())
 
     def intrinsics(self) -> torch.Tensor:
         """

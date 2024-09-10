@@ -19,7 +19,7 @@ class GSTrainer:
         self.gaussians = {}
         self.device = device
 
-    def init_gaussians(self, init_scale=0.1):
+    def init_gaussians(self, init_scale=0.003):
         pts, colors = self.scene.pts_dense_flat()
         quats = torch.zeros(pts.shape[0], 4)
         quats[:, 0] = 1.0
