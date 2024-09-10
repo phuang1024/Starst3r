@@ -21,16 +21,19 @@ class GSTrainer:
 
     def init_gaussians(self, init_scale=0.003):
         pts, colors = self.scene.pts_dense_flat()
-        quats = torch.zeros(pts.shape[0], 4)
-        quats[:, 0] = 1.0
         self.gaussians = {
             "means": pts,
             "scales": torch.full_like(pts, init_scale),
-            "quats": quats,
+            "quats": torch.zeros(pts.shape[0], 4),
             "opacities": torch.ones(pts.shape[0]),
             "sh0": torch.zeros(pts.shape[0], 1, 3),
             "shN": torch.zeros(pts.shape[0], 24, 3),
         }
+        self.gaussians["quats"][:, 0] = 1.0
+        self.gaussians["sh0"][:, 0] = 1 - colors
+        for i in range(24):
+            self.gaussians["shN"][:, i] = 1 - colors
+
         for k, v in self.gaussians.items():
             self.gaussians[k] = torch.nn.Parameter(v.to(self.device))
 
