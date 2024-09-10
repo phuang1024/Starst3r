@@ -28,7 +28,7 @@ for path in req_paths:
 
 setuptools.setup(
     name="starst3r",
-    version="0.1.0",
+    version="0.2.0",
     author="Patrick Huang",
     author_email="phuang1024@gmail.com",
     description="Fast 3D reconstruction framework using Mast3r.",
