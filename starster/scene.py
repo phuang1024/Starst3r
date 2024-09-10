@@ -12,6 +12,15 @@ class PointCloud:
         self.sparse_ga = sparse_ga
         self.num_cams = len(self.sparse_ga.pts3d)
 
+    @property
+    def imgs(self):
+        """
+        Source images.
+
+        Alias of ``self.sparse_ga.imgs``.
+        """
+        return self.sparse_ga.imgs
+
     def pts_sparse(self) -> list[tuple[torch.Tensor, torch.Tensor]]:
         """
         Returns (pts3d, colors) for each camera.
