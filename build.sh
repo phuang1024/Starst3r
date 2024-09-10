@@ -36,4 +36,5 @@ elif [ "$1" == "blender" ]; then
     build_blender
 else
     echo "Invalid usage."
+    exit 1
 fi
