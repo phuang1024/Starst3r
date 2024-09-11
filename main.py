@@ -59,6 +59,10 @@ import cv2
 
 gs = starster.GSTrainer(scene)
 gs.init_gaussians()
+
+gs.run_optimization(1000, enable_pruning=True, verbose=True)
+gs.run_optimization(5000, enable_pruning=False, verbose=True)
+
 render = gs.render_scene_views(224, 224)
 for i, img in enumerate(render[0]):
     cv2.imwrite(f"{i}.png", (img.detach().cpu().numpy()[..., ::-1] * 255).astype(np.uint8))

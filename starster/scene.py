@@ -17,6 +17,15 @@ class PointCloud:
         self.sparse_ga = sparse_ga
         self.num_cams = len(self.sparse_ga.pts3d)
 
+    @property
+    def imgs(self):
+        """
+        Source images.
+
+        Alias of ``self.sparse_ga.imgs``.
+        """
+        return self.sparse_ga.imgs
+
     def pts_sparse(self) -> list[tuple[torch.Tensor, torch.Tensor]]:
         """
         Returns (pts3d, colors) for each camera.
@@ -81,15 +90,7 @@ class PointCloud:
 
         Inverse of ``c2w``.
         """
-        # TODO check if correct
-        c2w = self.c2w()
-        mult = torch.tensor([
-            [1, 0, 0, 0],
-            [0, -1, 0, 0],
-            [0, 0, -1, 0],
-            [0, 0, 0, 1],
-        ], device=c2w.device)
-        return torch.inverse(c2w * mult)
+        return torch.inverse(self.c2w())
 
     def intrinsics(self) -> torch.Tensor:
         """
