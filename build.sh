@@ -1,3 +1,5 @@
+#!/bin/bash
+
 set -e
 
 function build_python() {
@@ -36,4 +38,5 @@ elif [ "$1" == "blender" ]; then
     build_blender
 else
     echo "Invalid usage."
+    exit 1
 fi

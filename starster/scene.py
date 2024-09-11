@@ -3,12 +3,17 @@ import torch
 
 class PointCloud:
     """
-    Reconstructed point cloud.
+    Reconstructed Mast3r point cloud.
+
+    Use ``starster.reconstruct_scene`` to get an instance of this class.
 
     Wrapper around Mast3r SparseGA.
     """
 
     def __init__(self, sparse_ga):
+        """
+        :param sparse_ga: SparseGA instance from Mast3r code.
+        """
         self.sparse_ga = sparse_ga
         self.num_cams = len(self.sparse_ga.pts3d)
 
@@ -24,6 +29,9 @@ class PointCloud:
     def pts_sparse(self) -> list[tuple[torch.Tensor, torch.Tensor]]:
         """
         Returns (pts3d, colors) for each camera.
+
+        - pts3d: 3D point coordinates. Shape (N, 3).
+        - colors: RGB colors for each point. Shape (N, 3).
         """
         ret = []
         for i in range(self.num_cams):
@@ -32,7 +40,9 @@ class PointCloud:
 
     def pts_sparse_flat(self) -> tuple[torch.Tensor, torch.Tensor]:
         """
-        Returns concatenated pts3d and pts3d_colors.
+        Returns all points from all cameras together.
+
+        See ``pts_sparse``.
         """
         pts = self.pts_sparse()
         pts3d = torch.cat([p[0] for p in pts], dim=0)
@@ -40,6 +50,11 @@ class PointCloud:
         return pts3d, colors
 
     def pts_dense(self, conf_thres=1.5) -> list[tuple[torch.Tensor, torch.Tensor]]:
+        """
+        Returns dense points for each camera.
+
+        See ``pts_sparse``.
+        """
         ret = []
         pts, _, confs = self.sparse_ga.get_dense_pts3d(clean_depth=True)
         for i in range(self.num_cams):
@@ -49,6 +64,11 @@ class PointCloud:
         return ret
 
     def pts_dense_flat(self, conf_thres=1.5) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Returns all dense points from all cameras together.
+
+        See ``pts_dense``.
+        """
         pts = self.pts_dense(conf_thres)
         pts3d = torch.cat([p[0] for p in pts], dim=0)
         colors = torch.cat([p[1] for p in pts], dim=0)
@@ -56,7 +76,7 @@ class PointCloud:
 
     def c2w(self) -> torch.Tensor:
         """
-        Returns camera-to-world transformation matrix.
+        Returns camera-to-world transformation matrices.
 
         Shape (C, 4, 4).
 
@@ -68,15 +88,13 @@ class PointCloud:
         """
         Returns world-to-camera transformation matrix.
 
-        Shape (C, 4, 4).
-
-        Alias of ``self.sparse_ga.w2cam``.
+        Inverse of ``c2w``.
         """
         return torch.inverse(self.c2w())
 
     def intrinsics(self) -> torch.Tensor:
         """
-        Returns camera intrinsics.
+        Returns camera intrinsic matrices.
 
         Shape (C, 3, 3).
 

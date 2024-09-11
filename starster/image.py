@@ -20,7 +20,7 @@ _normalize = T.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
 
 def make_pair_indices(n: int, symmetric: bool = True) -> list[tuple[int, int]]:
     """
-    Generate all pairs of indices for `n` elements.
+    Generate all pairs of indices for ``n`` elements.
 
     Fully connected graph; i.e. (i, j) exists for i, j < n and:
     - Symmetric: i != j;
@@ -40,7 +40,7 @@ def process_image(img: np.ndarray | torch.Tensor, size: int) -> torch.Tensor:
     """
     Preprocess image to model requirements.
 
-    Resize longest edge of image to `size`.
+    Resize longest edge of image to ``size``.
     Crops (around center) H and W to a multiple of 8.
 
     :param img: Shape (C,H,W), dtype uint8
@@ -69,7 +69,7 @@ def load_image(path: str | Path, size: int = 512) -> torch.Tensor:
     """
     Load and process image.
 
-    I.e. calls `process_image` on the loaded image.
+    I.e. calls ``process_image`` on the loaded image.
 
     :param path: Path to image.
     :param size: Resize longest edge to this.
