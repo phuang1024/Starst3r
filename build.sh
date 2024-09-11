@@ -36,12 +36,21 @@ function install_python() {
     pip install build/dist/*.whl -U --no-deps
 }
 
+function build_docs() {
+    ./build.sh install
+
+    cd docs
+    make html
+}
+
 if [ "$1" == "python" ]; then
     build_python
 elif [ "$1" == "blender" ]; then
     build_blender
 elif [ "$1" == "install" ]; then
     install_python
+elif [ "$1" == "docs" ]; then
+    build_docs
 else
     echo "Invalid usage."
     exit 1

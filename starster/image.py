@@ -1,5 +1,5 @@
 __all__ = (
-    "make_pair_indices",
+    #"make_pair_indices",
     "process_image",
     "load_image",
     "load_images",
@@ -37,14 +37,19 @@ def make_pair_indices(n: int, symmetric: bool = True) -> list[tuple[int, int]]:
 
 
 def process_image(img: np.ndarray | torch.Tensor, size: int) -> torch.Tensor:
-    """
-    Preprocess image to model requirements.
+    """Preprocess image to pipeline requirements.
 
-    Resize longest edge of image to ``size``.
-    Crops (around center) H and W to a multiple of 8.
+    - Resizes longest edge of image to ``size``.
+    - Crops (around center) H and W to a multiple of 8.
 
-    :param img: Shape (C,H,W), dtype uint8
-    :return: Tensor, shape (C,H,W), dtype float32
+    Parameters
+    ----------
+    img:
+        Shape (C,H,W), dtype uint8
+
+    Returns
+    -------
+    Tensor, shape (C,H,W), dtype float32
     """
     new_size = [int(x * size / max(img.shape[1:])) for x in img.shape[1:]]
     img = T.functional.resize(img, new_size, T.InterpolationMode.BICUBIC)
@@ -65,14 +70,19 @@ def process_image(img: np.ndarray | torch.Tensor, size: int) -> torch.Tensor:
     return img
 
 
-def load_image(path: str | Path, size: int = 512) -> torch.Tensor:
-    """
-    Load and process image.
+def load_image(path: str | Path, size: int = 224) -> torch.Tensor:
+    """Load and process image from file.
 
-    I.e. calls ``process_image`` on the loaded image.
+    Parameters
+    ----------
+    path:
+        Path to image.
+    size:
+        Resize longest edge to this.
 
-    :param path: Path to image.
-    :param size: Resize longest edge to this.
+    Returns
+    -------
+    Tensor. See :func:`process_image`.
     """
     img = Image.open(path)
     img = exif_transpose(img)
@@ -82,9 +92,10 @@ def load_image(path: str | Path, size: int = 512) -> torch.Tensor:
     return img
 
 
-def load_images(paths: list[str | Path], size: int = 512) -> list[torch.Tensor]:
-    """
-    Calls ``load_image`` on each path.
+def load_images(paths: list[str | Path], size: int = 224) -> list[torch.Tensor]:
+    """Load a list of files.
+
+    Calls :func:`load_image` on each path.
     """
     return [load_image(p, size) for p in paths]
 

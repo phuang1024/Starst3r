@@ -110,17 +110,28 @@ def pairs_inference(model, imgs, pair_indices, verbose=False):
 
 
 def reconstruct_scene(model, imgs, filelist, device, tmpdir=None) -> PointCloud:
-    """
-    Run reconstruction pipeline: Model inference and global adjustment.
+    """Run Mast3r reconstruction pipeline.
 
-    :param model: Model instance ``starster.Mast3rModel``.
-    :param imgs: List of images from ``starster.load_image``.
+    Mast3r model inference and global adjustment.
+
+    Parameters
+    ----------
+    model:
+        Model instance :class:`starster.Mast3rModel`.
+    imgs:
+        List of images from :func:`starster.load_image`.
         Tensor shape (C,H,W), dtype float32.
-    :param filelist: List of image paths corresponding to each image.
+    filelist:
+        List of image paths corresponding to each image.
         Due to Mast3r legacy code, this is required.
-    :param device: Torch device to run on.
-    :param tmpdir: Temp directory. If None, a new one is created.
-    :return: Reconstructed scene as ``PointCloud``.
+    device:
+        Torch device to run on.
+    tmpdir:
+        Temp directory. If None, a new one is created tempfile.
+
+    Returns
+    -------
+    Reconstructed scene as :class:`PointCloud`.
     """
     imgs = prepare_images_for_mast3r(imgs)
     pairs = make_pairs(imgs, scene_graph="complete", prefilter=None, symmetrize=True)
