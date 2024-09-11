@@ -72,6 +72,7 @@ Use results:
 
    width, height = 224, 224
    # Render views from original camera poses
+   # img (color image render) has shape (N, H, W, 3).
    img, alpha, info = gs.render_views_original(width, height)
    # Render from new camera poses
    img, alpha, info = gs.render_views(world_to_cam, intrinsics, width, height)

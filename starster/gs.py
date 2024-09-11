@@ -94,6 +94,8 @@ class GSTrainer:
         Output of ``gsplat.rasterization``.
 
         Tuple of ``(render_img, render_alpha, info)``.
+
+        - render_img: Color image. Shape (N, H, W, 3).
         """
         render = gsplat.rasterization(
             means=self.gaussians["means"],
