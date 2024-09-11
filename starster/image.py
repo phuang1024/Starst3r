@@ -1,3 +1,7 @@
+"""
+Image loading and processing.
+"""
+
 __all__ = (
     #"make_pair_indices",
     "process_image",
@@ -44,11 +48,13 @@ def process_image(img: np.ndarray | torch.Tensor, size: int) -> torch.Tensor:
 
     Parameters
     ----------
+
     img:
         Shape (C,H,W), dtype uint8
 
     Returns
     -------
+
     Tensor, shape (C,H,W), dtype float32
     """
     new_size = [int(x * size / max(img.shape[1:])) for x in img.shape[1:]]
@@ -75,13 +81,16 @@ def load_image(path: str | Path, size: int = 224) -> torch.Tensor:
 
     Parameters
     ----------
+
     path:
         Path to image.
+
     size:
         Resize longest edge to this.
 
     Returns
     -------
+
     Tensor. See :func:`process_image`.
     """
     img = Image.open(path)

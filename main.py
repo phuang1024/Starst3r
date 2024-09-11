@@ -43,6 +43,8 @@ model = starster.Mast3rModel.from_pretrained("../models/MASt3R_ViTLarge_BaseDeco
 scene = starster.reconstruct_scene(model, imgs, files, DEVICE, "/tmp/starster_main_test")
 #starster.pairs_inference(model, imgs, pairs)
 
+print(scene.imgs[0].shape)
+
 #pts3d, _, confs = to_numpy(tsdf.get_dense_pts3d(clean_depth=clean_depth))
 
 """
