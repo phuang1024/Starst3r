@@ -29,8 +29,4 @@ There are certain restrictions on the images:
 2. Run the pipeline
 ^^^^^^^^^^^^^^^^^^^
 
-Use the Starst3r function to run the whole pipeline:
-
-.. code-block:: py
-
-   scene = starster.reconstruct_scene(model,
+TODO
