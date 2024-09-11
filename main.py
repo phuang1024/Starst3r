@@ -60,8 +60,7 @@ import cv2
 gs = starster.GSTrainer(scene)
 gs.init_gaussians()
 
-gs.init_optimizer()
-gs.run_optimization(1000)
+gs.run_optimization(1000, verbose=True)
 
 render = gs.render_scene_views(224, 224)
 for i, img in enumerate(render[0]):
