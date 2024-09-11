@@ -1,6 +1,9 @@
 Installation
 ============
 
+Starst3r Python
+---------------
+
 Starst3r can be installed as a pip package.
 
 .. code-block:: bash
@@ -17,6 +20,15 @@ The package includes four Python modules:
 For most cases, your script will only use the ``starster`` module.
 
 See :ref:`Quickstart` for more information on how to use the library.
+
+Download Mast3r model
+---------------------
+
+Download the pretrained Mast3r model.
+
+https://github.com/naver/mast3r/?tab=readme-ov-file#checkpoints
+
+Starst3r uses the same Mast3r model internally.
 
 Building
 --------

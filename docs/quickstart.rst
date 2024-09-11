@@ -1,14 +1,7 @@
 Quickstart
 ==========
 
-Download Mast3r model
----------------------
-
-Download the pretrained Mast3r model.
-
-https://github.com/naver/mast3r/?tab=readme-ov-file#checkpoints
-
-Starst3r uses the same Mast3r model internally.
+Please see :ref:`Installation` first.
 
 Mast3r reconstruction
 ---------------------
