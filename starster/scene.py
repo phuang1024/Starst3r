@@ -18,6 +18,8 @@ class PointCloudScene:
     as well as novel functions.
     """
 
+    num_cams: int
+
     def __init__(self, sparse_ga):
         """
         Parameters

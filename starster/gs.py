@@ -109,7 +109,7 @@ class GSTrainer:
         )
         return render
 
-    def render_scene_views(self, width: int, height: int):
+    def render_views_original(self, width: int, height: int):
         """Render from camera views of original scene (``self.scene``).
 
         See ``render_views``.
@@ -142,7 +142,7 @@ class GSTrainer:
 
         pbar = trange(iters, disable=not verbose)
         for step in pbar:
-            render_img, render_alpha, info = self.render_scene_views(width, height)
+            render_img, render_alpha, info = self.render_views_original(width, height)
 
             if enable_pruning:
                 self.strategy.step_pre_backward(self.gaussians, self.optimizers, self.strategy_state, step, info)

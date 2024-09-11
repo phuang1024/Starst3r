@@ -1,10 +1,8 @@
 Quickstart
 ==========
 
-First see :ref:`Installation`.
-
-Download model
---------------
+Download Mast3r model
+---------------------
 
 Download the pretrained Mast3r model.
 
@@ -12,8 +10,10 @@ https://github.com/naver/mast3r/?tab=readme-ov-file#checkpoints
 
 Starst3r uses the same Mast3r model internally.
 
-Reconstruct scene
------------------
+Mast3r reconstruction
+---------------------
+
+Reconstruct:
 
 .. code-block:: python
 
@@ -27,7 +27,7 @@ Reconstruct scene
       ...
    )
 
-   # Load images with specified resolution (default 512)
+   # Load images with specified resolution (default 224)
    imgs = starster.load_images(files, size=224)
 
    # Load model from file
@@ -36,25 +36,50 @@ Reconstruct scene
    # Reconstruct scene
    scene = starster.reconstruct_scene(model, imgs, files, device)
 
-Use results
------------
+Use results:
 
 .. code-block:: python
 
-   # Iterate point clouds with respect to each camera.
-   num_cameras = len(scene.pts3d)
-   for i in range(num_cameras):
+   # Dense point clouds from each camera (in global XYZ space)
+   all_pts = scene.pts_dense()
+   for i in range(len(all_pts)):
+       pts, colors = all_pts[i]
+
        # Point cloud: pts shape is (N, 3); XYZ of each point.
-       pts = scene.pts3d[i]
        print(f"Points from camera {i}: {pts.shape}")
 
        # Point colors: shape is (N, 3); RGB of each point.
-       colors = scene.pts3d_colors[i]
        print(f"Colors from camera {i}: {colors.shape}")
 
-   # Iterate all points of all cameras.
-   for pt, color in starster.iterate_verts(scene):
-       ...
+   # Dense points from all cameras concatenated together
+   pts, colors = scene.pts_dense_flat()
+   print("Total points from all cameras:", pts.shape)
 
-   num_verts = starster.num_verts(scene)
-   print("Total verts from all cameras:", num_verts)
+   # Sparse points (fewer points than dense)
+   pts_sparse, colors_sparse = scene.pts_sparse()
+   all_pts_sparse = scene.pts_sparse_flat()
+   # ... and process similarly
+
+3D Gaussian Splatting refinement
+--------------------------------
+
+.. code-block:: python
+
+   # See above
+   scene = starster.reconstruct_scene(...)
+
+   gs = starster.GSTrainer(scene, device=device)
+
+   width, height = 224, 224
+   # Render views from original camera poses
+   img, alpha, info = gs.render_views_original(width, height)
+   # Render from new camera poses
+   img, alpha, info = gs.render_views(world_to_cam, intrinsics, width, height)
+
+   # Run 3DGS optimization for 1000 iters
+   gs.run_optimization(1000, enable_pruning=True, verbose=True)
+   # Run without pruning and densification
+   gs.run_optimization(5000, enable_pruning=False, verbose=True)
+
+   # Render again with refined splats
+   img, alpha, info = gs.render_views_original(width, height)
