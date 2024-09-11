@@ -53,7 +53,8 @@ class GSTrainer:
             self.gaussians[k] = torch.nn.Parameter(v.to(self.device))
 
         self.optimizers = {k: torch.optim.Adam([v], lr=lr) for k, v in self.gaussians.items()}
-        self.strategy = gsplat.DefaultStrategy()
+        # Using MC strategy bc DefaultStrategy has a bug.
+        self.strategy = gsplat.MCMCStrategy()
         self.strategy.check_sanity(self.gaussians, self.optimizers)
         self.strategy_state = self.strategy.initialize_state()
 
@@ -105,6 +106,6 @@ class GSTrainer:
                 optim.zero_grad(set_to_none=True)
 
             if enable_pruning:
-                self.strategy.step_post_backward(self.gaussians, self.optimizers, self.strategy_state, step, info)
+                self.strategy.step_post_backward(self.gaussians, self.optimizers, self.strategy_state, step, info, 1e-3)
 
         return losses
