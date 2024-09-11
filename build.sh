@@ -9,7 +9,6 @@ function build_python() {
     cp ../setup.py .
 
     cp -r ../starster .
-    rm starster/dust3r starster/mast3r
 
     cp -r ../mast3r/mast3r .
     cp -r ../mast3r/dust3r/dust3r .
@@ -32,10 +31,17 @@ function build_blender() {
     zip -r starster.zip starster_blender
 }
 
+function install_python() {
+    ./build.sh python
+    pip install build/dist/*.whl -U --no-deps
+}
+
 if [ "$1" == "python" ]; then
     build_python
 elif [ "$1" == "blender" ]; then
     build_blender
+elif [ "$1" == "install" ]; then
+    install_python
 else
     echo "Invalid usage."
     exit 1
