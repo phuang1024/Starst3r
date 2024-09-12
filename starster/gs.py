@@ -6,8 +6,9 @@ __all__ = (
     "GSTrainer",
 )
 
-import torch
 import gsplat
+import torch
+from torchmetrics.image import StructuralSimilarityIndexMeasure as SSIM
 from tqdm import trange
 
 from .scene import PointCloudScene
@@ -21,7 +22,14 @@ class GSTrainer:
     Uses the Mast3r reconstruction as a starting point.
     """
 
-    def __init__(self, scene: PointCloudScene, init_scale=3e-3, lr=1e-3, device: str = "cuda"):
+    def __init__(
+            self,
+            scene: PointCloudScene,
+            init_scale=3e-3,
+            lr=1e-3,
+            ssim_factor=0.2,
+            device: str = "cuda"
+        ):
         """Initialize the splats and optimizers from the Mast3r reconstruction.
 
         Parameters
@@ -69,6 +77,10 @@ class GSTrainer:
         self.strategy = gsplat.MCMCStrategy()
         self.strategy.check_sanity(self.gaussians, self.optimizers)
         self.strategy_state = self.strategy.initialize_state()
+
+        # Create required losses
+        self.ssim_factor = ssim_factor
+        self.ssim = SSIM(data_range=1).to(self.device)
 
     def render_views(self, w2c: torch.Tensor, intrinsics: torch.Tensor, width: int, height: int):
         """Render the splats from a set of camera views.
@@ -118,6 +130,13 @@ class GSTrainer:
         """
         return self.render_views(self.scene.w2c(), self.scene.intrinsics(), width, height)
 
+    def compute_loss(self, truth_img, render_img, render_alpha):
+        l1 = torch.nn.functional.l1_loss(truth_img, render_img)
+        ssim = 1 - self.ssim(truth_img.permute(2, 0, 1).unsqueeze(0), render_img.permute(2, 0, 1).unsqueeze(0))
+        loss = l1 * (1 - self.ssim_factor) + ssim * self.ssim_factor
+
+        return loss
+
     def run_optimization(self, iters: int, enable_pruning: bool = False, verbose: bool = False) -> list[float]:
         """Run 3DGS optimization and pruning (optional) for a number of iterations.
 
@@ -152,7 +171,7 @@ class GSTrainer:
             loss = 0
             for i in range(self.scene.num_cams):
                 img = torch.tensor(self.scene.imgs[i], device=self.device)
-                loss += torch.nn.functional.mse_loss(render_img[i], img)
+                loss += self.compute_loss(img, render_img[i], render_alpha[i])
             loss.backward()
 
             desc = f"Gsplat optimization: loss={loss.item()}"

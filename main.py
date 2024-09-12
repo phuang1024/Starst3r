@@ -9,6 +9,7 @@ import starster
 import torch
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+RES = 512
 
 
 files = []
@@ -29,7 +30,7 @@ exit()
 
 imgs = []
 for file in files:
-    imgs.append(starster.load_image(file, 224))
+    imgs.append(starster.load_image(file, RES))
 
 """
 imgs_mast3r = starster.prepare_images_for_mast3r(imgs)
@@ -61,10 +62,12 @@ import cv2
 
 gs = starster.GSTrainer(scene)
 
-gs.run_optimization(1000, enable_pruning=True, verbose=True)
-gs.run_optimization(5000, enable_pruning=False, verbose=True)
+gs.run_optimization(400, enable_pruning=True, verbose=True)
+gs.run_optimization(100, enable_pruning=False, verbose=True)
 
-render = gs.render_views_original(224, 224)
-print(render[0].shape)
-for i, img in enumerate(render[0]):
-    cv2.imwrite(f"{i}.png", (img.detach().cpu().numpy()[..., ::-1] * 255).astype(np.uint8))
+imgs, alpha, info = gs.render_views_original(RES, RES)
+print(imgs.shape)
+imgs = torch.clip(imgs.detach().cpu(), 0, 1)
+imgs = (imgs.numpy()[..., ::-1] * 255).astype(np.uint8)
+for i, img in enumerate(imgs):
+    cv2.imwrite(f"{i}.png", img)
