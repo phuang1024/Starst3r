@@ -27,7 +27,9 @@ class GSTrainer:
             scene: PointCloudScene,
             init_scale=3e-3,
             lr=1e-3,
-            ssim_factor=0.2,
+            loss_ssim_fac=0.2,
+            loss_opacity_fac=0.01,
+            loss_scale_fac=0.01,
             device: str = "cuda"
         ):
         """Initialize the splats and optimizers from the Mast3r reconstruction.
@@ -44,6 +46,15 @@ class GSTrainer:
 
         lr:
             Learning rate for Adam optimizers.
+
+        loss_ssim_fac:
+            Factor for the SSIM loss.
+
+        loss_opacity_fac:
+            Factor for the opacity loss.
+
+        loss_scale_fac:
+            Factor for the scale loss.
 
         device:
             Device to use.
@@ -79,7 +90,10 @@ class GSTrainer:
         self.strategy_state = self.strategy.initialize_state()
 
         # Create required losses
-        self.ssim_factor = ssim_factor
+        self.loss_ssim_fac = loss_ssim_fac
+        self.loss_opacity_fac = loss_opacity_fac
+        self.loss_scale_fac = loss_scale_fac
+
         self.ssim = SSIM(data_range=1).to(self.device)
 
     def render_views(self, w2c: torch.Tensor, intrinsics: torch.Tensor, width: int, height: int):
@@ -132,8 +146,13 @@ class GSTrainer:
 
     def compute_loss(self, truth_img, render_img, render_alpha):
         l1 = torch.nn.functional.l1_loss(truth_img, render_img)
+
         ssim = 1 - self.ssim(truth_img.permute(2, 0, 1).unsqueeze(0), render_img.permute(2, 0, 1).unsqueeze(0))
-        loss = l1 * (1 - self.ssim_factor) + ssim * self.ssim_factor
+        loss = l1 * (1 - self.loss_ssim_fac) + ssim * self.loss_ssim_fac
+
+        loss += self.loss_opacity_fac * torch.abs(torch.sigmoid(self.gaussians["opacities"])).mean()
+
+        loss += self.loss_scale_fac * torch.abs(torch.exp(self.gaussians["scales"])).mean()
 
         return loss
 

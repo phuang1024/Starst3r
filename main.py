@@ -62,6 +62,16 @@ import cv2
 
 gs = starster.GSTrainer(scene)
 
+# Show progress.
+for i in range(50):
+    imgs, alpha, info = gs.render_views_original(RES, RES)
+    imgs = torch.clip(imgs.detach().cpu(), 0, 1)
+    imgs = (imgs.numpy()[..., ::-1] * 255).astype(np.uint8)
+    cv2.imwrite(f"imgs/{i}.jpg", imgs[0])
+
+    gs.run_optimization(10, enable_pruning=True, verbose=True)
+
+"""
 gs.run_optimization(400, enable_pruning=True, verbose=True)
 gs.run_optimization(100, enable_pruning=False, verbose=True)
 
@@ -71,3 +81,4 @@ imgs = torch.clip(imgs.detach().cpu(), 0, 1)
 imgs = (imgs.numpy()[..., ::-1] * 255).astype(np.uint8)
 for i, img in enumerate(imgs):
     cv2.imwrite(f"{i}.png", img)
+"""
