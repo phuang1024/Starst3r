@@ -3,10 +3,8 @@
 
 3D Gaussian Splatting (3DGS) refines a 3D scene for visual quality.
 
-It can use the Mast3r reconstruction as a starting point, dramatically improving
-speed.
-
-In the Starst3r library, it must extend off of a Mast3r scene.
+In this library, it uses the Mast3r reconstruction as a starting point,
+dramatically improving speed.
 
 Tutorial
 --------
@@ -15,6 +13,8 @@ Tutorial
 ^^^^^^^^^^^^^^^^
 
 Create a trainer object after reconstructing a scene with Mast3r.
+
+See :ref:`Mast3r reconstruction`.
 
 .. code-block:: python
 
@@ -31,10 +31,10 @@ Run optimization, pruning, and densification.
 
 .. code-block:: python
 
-   # Run 3DGS optimization for 1000 iters
-   gs.run_optimization(1000, enable_pruning=True, verbose=True)
+   # Run 3DGS optimization for 500 iters
+   gs.run_optimization(500, enable_pruning=True, verbose=True)
    # Run without pruning and densification
-   gs.run_optimization(5000, enable_pruning=False, verbose=True)
+   gs.run_optimization(100, enable_pruning=False, verbose=True)
 
 3. Render views
 ^^^^^^^^^^^^^^^

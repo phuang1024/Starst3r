@@ -24,12 +24,9 @@ Load the images using Starst3r functions:
 
 .. code-block:: python
 
-   # These two are sufficient.
+   # Load and preprocess from a path.
    img = starster.load_image("/path/to/img.jpg", size=224)
    imgs = starster.load_images(files)
-
-   # Or, process a preloaded image to pipeline requirements.
-   processed_img = starster.process_image(another_img, size=224)
 
 See the docs for return and argument specifications.
 
