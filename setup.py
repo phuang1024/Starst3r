@@ -28,7 +28,7 @@ for path in req_paths:
 
 setuptools.setup(
     name="starst3r",
-    version="0.3.0",
+    version="0.4.0",
     author="Patrick Huang",
     author_email="phuang1024@gmail.com",
     description="Ultra fast 3D reconstruction and novel view synthesis.",

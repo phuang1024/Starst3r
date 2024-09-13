@@ -1,4 +1,4 @@
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 from mast3r.model import AsymmetricMASt3R as Mast3rModel
 
