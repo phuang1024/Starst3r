@@ -13,9 +13,7 @@ Starst3r
    blender.rst
    api.rst
 
-Fast 3D reconstruction framework using Mast3r.
-
-.. image:: ./images/Poster.jpg
+Ultra fast 3D reconstruction and novel view synthesis.
 
 .. image:: ./images/demo.gif
 

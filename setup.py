@@ -31,7 +31,7 @@ setuptools.setup(
     version="0.3.0",
     author="Patrick Huang",
     author_email="phuang1024@gmail.com",
-    description="Fast 3D reconstruction framework using Mast3r.",
+    description="Ultra fast 3D reconstruction and novel view synthesis.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/phuang1024/Starst3r",
