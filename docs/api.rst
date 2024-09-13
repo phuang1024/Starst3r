@@ -4,10 +4,18 @@ API
 Mast3r inference
 ----------------
 
-.. autoclass:: starster.PointCloud
+.. autoclass:: starster.Mast3rModel
+
+.. autoclass:: starster.PointCloudScene
    :members:
 
 .. autofunction:: starster.reconstruct_scene
+
+3DGS refinement
+---------------
+
+.. autoclass:: starster.GSTrainer
+   :members:
 
 Image
 -----

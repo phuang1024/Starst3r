@@ -1,5 +1,5 @@
 """
-Functions for running the inference pipeline.
+Functions for running the Mast3r inference pipeline.
 """
 
 __all__ = (
@@ -18,7 +18,7 @@ from dust3r.image_pairs import make_pairs
 from mast3r.cloud_opt.sparse_ga import sparse_global_alignment, extract_correspondences
 
 from .image import prepare_images_for_mast3r
-from .scene import PointCloud
+from .scene import PointCloudScene
 
 
 def symmetric_inference(model, img1, img2) -> dict[str, list[torch.Tensor]]:
@@ -109,18 +109,35 @@ def pairs_inference(model, imgs, pair_indices, verbose=False):
     return ret
 
 
-def reconstruct_scene(model, imgs, filelist, device, tmpdir=None) -> PointCloud:
-    """
-    Run reconstruction pipeline: Model inference and global adjustment.
+def reconstruct_scene(model, imgs, filelist, device, tmpdir=None) -> PointCloudScene:
+    """Run Mast3r reconstruction pipeline.
 
-    :param model: Model instance ``starster.Mast3rModel``.
-    :param imgs: List of images from ``starster.load_image``.
+    Mast3r model inference and global adjustment.
+
+    Parameters
+    ----------
+
+    model:
+        Model instance :class:`starster.Mast3rModel`.
+
+    imgs:
+        List of images from :func:`starster.load_image`.
         Tensor shape (C,H,W), dtype float32.
-    :param filelist: List of image paths corresponding to each image.
+
+    filelist:
+        List of image paths corresponding to each image.
         Due to Mast3r legacy code, this is required.
-    :param device: Torch device to run on.
-    :param tmpdir: Temp directory. If None, a new one is created.
-    :return: Reconstructed scene as ``PointCloud``.
+
+    device:
+        Torch device to run on.
+
+    tmpdir:
+        Temp directory. If None, a new one is created tempfile.
+
+    Returns
+    -------
+
+    Reconstructed scene as :class:`PointCloudScene`.
     """
     imgs = prepare_images_for_mast3r(imgs)
     pairs = make_pairs(imgs, scene_graph="complete", prefilter=None, symmetrize=True)
@@ -142,6 +159,6 @@ def reconstruct_scene(model, imgs, filelist, device, tmpdir=None) -> PointCloud:
         shared_intrinsics=False,
     )
 
-    scene = PointCloud(scene)
+    scene = PointCloudScene(scene)
 
     return scene

@@ -2,5 +2,6 @@ gsplat
 numpy
 pillow
 torch
+torchmetrics
 torchvision
 tqdm
