@@ -25,3 +25,10 @@ Image
 .. autofunction:: starster.load_images
 
 .. autofunction:: starster.process_image
+
+Utils
+-----
+
+.. autofunction:: starster.interp_se3
+
+.. autofunction:: starster.interp_se3_path
