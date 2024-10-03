@@ -20,7 +20,7 @@ class PointCloudScene:
 
     num_cams: int
 
-    def __init__(self, sparse_ga):
+    def __init__(self, sparse_ga, tmpdir):
         """
         Parameters
         ----------
@@ -29,6 +29,8 @@ class PointCloudScene:
             SparseGA instance from Mast3r code.
         """
         self.sparse_ga = sparse_ga
+        self.tmpdir = tmpdir
+
         self.num_cams = len(self.sparse_ga.pts3d)
 
     @property

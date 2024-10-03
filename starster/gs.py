@@ -11,7 +11,7 @@ import torch
 from torchmetrics.image import StructuralSimilarityIndexMeasure as SSIM
 from tqdm import trange
 
-from .scene import PointCloudScene
+from .pointcloud import PointCloudScene
 
 
 class GSTrainer:
