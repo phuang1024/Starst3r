@@ -3,109 +3,77 @@ Reconstructed point cloud wrapper class.
 """
 
 __all__ = (
-    "PointCloudScene",
+    "Scene",
 )
+
+import tempfile
+from typing import Optional
 
 import torch
 
 
-class PointCloudScene:
-    """Reconstructed point cloud; output of Mast3r pipeline.
-
-    Use :func:`starster.reconstruct_scene` to get an instance of this class.
-
-    This class has some wrapper functions around Mast3r SparseGA,
-    as well as novel functions.
+class Scene:
+    """Starst3r scene. Contains Mast3r and 3DGS reconstructions, and helper methods.
     """
 
-    num_cams: int
+    raw_imgs: list[torch.Tensor]
+    """GT images, unscaled. Each img is shape (H, W, 3)."""
+    imgs: list[torch.Tensor]
+    """GT images after scaling via Mast3r code."""
 
-    def __init__(self, sparse_ga):
-        """
+    dense_pts: list[torch.Tensor]
+    """Dense point 3D coords from Mast3r reconstruction. From each camera view."""
+    dense_cols: list[torch.Tensor]
+    """Dense point colors from Mast3r reconstruction. From each camera view."""
+
+    c2w: torch.Tensor
+    """Camera-to-world matrix, shape (C, 4, 4)."""
+    intrinsics: torch.Tensor
+    """Camera intrinsic matrices, shape (C, 3, 3)."""
+
+    cache_dir: str
+
+    def __init__(self, imgs: Optional[list[torch.Tensor]] = None, cache_dir: Optional[str] = None):
+        """Initialize a new scene.
+
         Parameters
         ----------
 
-        sparse_ga:
-            SparseGA instance from Mast3r code.
+        imgs:
+            Starting GT images. If None, then no images are added now.
+
+        cache_dir:
+            Tmp dir. If None, a new one is created via tempfile.
         """
-        self.sparse_ga = sparse_ga
-        self.num_cams = len(self.sparse_ga.pts3d)
+        self.raw_imgs = []
+        self.imgs = []
+        self.dense_pts = []
+        self.dense_cols = []
+        self.c2w = None
+        self.intrinsics = None
+
+        self.cache_dir = cache_dir
+        if cache_dir is None:
+            self.cache_dir = tempfile.mkdtemp()
+
+        if imgs is not None:
+            self.add_images(imgs)
 
     @property
-    def imgs(self) -> list[torch.Tensor]:
-        """Get source image tensors.
+    def dense_pts_flat(self):
+        """Dense points concatenated from all cameras."""
+        return torch.cat(self.dense_pts, dim=0)
 
-        Alias of ``self.sparse_ga.imgs``.
+    @property
+    def dense_cols_flat(self):
+        """Dense colors concatenated from all cameras."""
+        return torch.cat(self.dense_cols, dim=0)
 
-        Returns
-        -------
-
-        List of tensors for each camera.
-
-        Each tensor is shape (H, W, 3).
-        """
-        return self.sparse_ga.imgs
-
-    def pts_sparse(self) -> list[tuple[torch.Tensor, torch.Tensor]]:
-        """Get reconstructed 3D point coordinates and colors.
-
-        These four functions (pts_sparse, pts_sparse_flat, pts_dense, pts_dense_flat)
-        behave similarly.
-
-        Sparse and dense return their respective point clouds.
-
-        Flat returns a concatenated point cloud from all cameras together.
-
-        Non-flat returns a list of point clouds, one for each camera.
-
-        Each point cloud is returned as ``(pts3d, colors)``:
-
-        - pts3d: 3D point coordinates. Shape (N, 3).
-        - colors: RGB colors for each point. Shape (N, 3).
-        """
-        ret = []
-        for i in range(self.num_cams):
-            ret.append((self.sparse_ga.pts3d[i], self.sparse_ga.pts3d_colors[i]))
-        return ret
-
-    def pts_sparse_flat(self) -> tuple[torch.Tensor, torch.Tensor]:
-        """See ``pts_sparse``."""
-        pts = self.pts_sparse()
-        pts3d = torch.cat([p[0] for p in pts], dim=0)
-        colors = torch.cat([p[1] for p in pts], dim=0)
-        return pts3d, colors
-
-    def pts_dense(self, conf_thres=1.5) -> list[tuple[torch.Tensor, torch.Tensor]]:
-        """See ``pts_sparse``."""
-        ret = []
-        pts, _, confs = self.sparse_ga.get_dense_pts3d(clean_depth=True)
-        for i in range(self.num_cams):
-            colors = torch.tensor(self.sparse_ga.imgs[i]).reshape(-1, 3)
-            mask = (confs[i] > conf_thres).reshape(-1).cpu()
-            ret.append((pts[i][mask], colors[mask]))
-        return ret
-
-    def pts_dense_flat(self, conf_thres=1.5) -> tuple[torch.Tensor, torch.Tensor]:
-        """See ``pts_sparse``."""
-        pts = self.pts_dense(conf_thres)
-        pts3d = torch.cat([p[0] for p in pts], dim=0)
-        colors = torch.cat([p[1] for p in pts], dim=0)
-        return pts3d, colors
-
-    def c2w(self) -> torch.Tensor:
-        """Returns camera-to-world transformation matrices, shape (C, 4, 4).
-
-        Alias of ``self.sparse_ga.cam2w``.
-        """
-        return self.sparse_ga.cam2w
-
+    @property
     def w2c(self) -> torch.Tensor:
-        """Returns world-to-camera transformation matrix (inverse of ``c2w``)."""
-        return torch.inverse(self.c2w())
+        """World-to-camera transformation matrix (inverse of ``c2w``)."""
+        return torch.inverse(self.c2w)
 
-    def intrinsics(self) -> torch.Tensor:
-        """Returns camera intrinsic matrices, shape (C, 3, 3).
-
-        Alias of ``self.sparse_ga.intrinsics``.
+    def add_images(self, imgs: list[torch.Tensor]):
+        """Add GT images to the scene. Solve camera pose and update dense points with Mast3r.
         """
-        return self.sparse_ga.intrinsics
