@@ -11,6 +11,8 @@ from typing import Optional
 
 import torch
 
+from .reconstruct import reconstruct_scene
+
 
 class Scene:
     """Starst3r scene. Contains Mast3r and 3DGS reconstructions, and helper methods.
@@ -74,6 +76,31 @@ class Scene:
         """World-to-camera transformation matrix (inverse of ``c2w``)."""
         return torch.inverse(self.c2w)
 
-    def add_images(self, imgs: list[torch.Tensor]):
+    def add_images(
+            self,
+            model,
+            imgs: list[torch.Tensor],
+            filelist,
+            device,
+            conf_thres=1.5,
+        ):
         """Add GT images to the scene. Solve camera pose and update dense points with Mast3r.
         """
+        scene = reconstruct_scene(model, imgs, filelist, device, tmpdir=self.cache_dir)
+
+        self.raw_imgs.extend(imgs)
+        self.imgs.extend(scene.imgs)
+
+        if self.c2w is None:
+            self.c2w = scene.cam2w
+            self.intrinsics = scene.intrinsics
+        else:
+            self.c2w = torch.stack(self.c2w, scene.cam2w)
+            self.intrinsics = torch.stack(self.intrinsics, scene.intrinsics)
+
+        pts, _, confs = scene.get_dense_pts3d(clean_depth=True)
+        for i in range(len(imgs)):
+            mask = (confs[i] > conf_thres).reshape(-1).cpu()
+            colors = torch.tensor(scene.imgs[i]).reshape(-1, 3)
+            self.dense_pts.append(pts[i][mask])
+            self.dense_cols.append(colors[mask])

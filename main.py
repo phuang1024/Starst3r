@@ -1,3 +1,7 @@
+"""
+Testing script
+"""
+
 import sys
 sys.path.append("mast3r")
 sys.path.append("mast3r/dust3r")
@@ -9,7 +13,7 @@ import starster
 import torch
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-RES = 512
+RES = 224
 
 
 files = []
@@ -41,12 +45,11 @@ pairs = starster.make_pair_indices(len(imgs), symmetric=True)
 
 model = starster.Mast3rModel.from_pretrained("../models/MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric.pth").to(DEVICE)
 
-scene = starster.reconstruct_scene(model, imgs, files, DEVICE, "/tmp/starster_main_test")
-#starster.pairs_inference(model, imgs, pairs)
+scene = starster.Scene()
+scene.add_images(model, imgs, files, DEVICE)
 
 print(scene.imgs[0].shape)
 
-#pts3d, _, confs = to_numpy(tsdf.get_dense_pts3d(clean_depth=clean_depth))
 
 """
 import numpy as np
@@ -57,6 +60,7 @@ for i, pts in enumerate(scene.pts3d):
 print(len(scene.pts3d), scene.pts3d[0].shape)
 """
 
+"""
 import numpy as np
 import cv2
 
@@ -71,6 +75,7 @@ for i in range(50):
 
     gs.run_optimization(10, enable_pruning=True, verbose=True)
 
+"""
 """
 gs.run_optimization(400, enable_pruning=True, verbose=True)
 gs.run_optimization(100, enable_pruning=False, verbose=True)
