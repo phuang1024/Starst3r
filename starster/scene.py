@@ -80,12 +80,29 @@ class Scene:
             self,
             model,
             imgs: list[torch.Tensor],
-            filelist,
             device,
             conf_thres=1.5,
         ):
         """Add GT images to the scene. Solve camera pose and update dense points with Mast3r.
+
+        Parameters
+        ----------
+
+        model:
+            Model instance. :class:`starst3r.Mast3rModel`.
+
+        imgs:
+            New GT images to add. Each img is shape (H, W, 3).
+
+        device:
+            Torch device to use.
+
+        conf_thres:
+            Confidence threshold for Mast3r dense points.
         """
+        # Generate fake filelist.
+        filelist = [f"{i + len(self.imgs)}.png" for i in range(len(imgs))]
+
         scene = reconstruct_scene(model, imgs, filelist, device, tmpdir=self.cache_dir)
 
         self.raw_imgs.extend(imgs)
