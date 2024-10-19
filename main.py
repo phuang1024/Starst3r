@@ -46,7 +46,8 @@ pairs = starster.make_pair_indices(len(imgs), symmetric=True)
 model = starster.Mast3rModel.from_pretrained("../models/MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric.pth").to(DEVICE)
 
 scene = starster.Scene()
-scene.add_images(model, imgs, DEVICE)
+scene.add_images(model, imgs[:2], DEVICE)
+scene.add_images(model, imgs[2:], DEVICE)
 
 print(scene.imgs[0].shape)
 

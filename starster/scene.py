@@ -7,7 +7,7 @@ __all__ = (
 )
 
 import tempfile
-from typing import Optional
+from typing import Any, Optional
 
 import torch
 
@@ -33,6 +33,9 @@ class Scene:
     intrinsics: torch.Tensor
     """Camera intrinsic matrices, shape (C, 3, 3)."""
 
+    optim_params: dict[str, Any]
+    """SLAM parameters passed to Mast3r scene optimization."""
+
     cache_dir: str
 
     def __init__(self, imgs: Optional[list[torch.Tensor]] = None, cache_dir: Optional[str] = None):
@@ -53,6 +56,7 @@ class Scene:
         self.dense_cols = []
         self.c2w = None
         self.intrinsics = None
+        self.optim_params = None
 
         self.cache_dir = cache_dir
         if cache_dir is None:
@@ -100,23 +104,33 @@ class Scene:
         conf_thres:
             Confidence threshold for Mast3r dense points.
         """
-        # Generate fake filelist.
-        filelist = [f"{i + len(self.imgs)}.png" for i in range(len(imgs))]
-
-        scene = reconstruct_scene(model, imgs, filelist, device, tmpdir=self.cache_dir)
-
         self.raw_imgs.extend(imgs)
+
+        # Generate fake filelist.
+        filelist = [f"{i}.png" for i in range(len(self.raw_imgs))]
+
+        scene, optim_params = reconstruct_scene(
+            model,
+            self.raw_imgs,
+            filelist,
+            device,
+            optim_params=self.optim_params,
+            tmpdir=self.cache_dir,
+        )
+        self.optim_params = optim_params
+
+        curr_len = len(self.imgs)
         self.imgs.extend(scene.imgs)
 
         if self.c2w is None:
             self.c2w = scene.cam2w
             self.intrinsics = scene.intrinsics
         else:
-            self.c2w = torch.stack(self.c2w, scene.cam2w)
-            self.intrinsics = torch.stack(self.intrinsics, scene.intrinsics)
+            self.c2w = torch.cat((self.c2w, scene.cam2w[curr_len:]), dim=0)
+            self.intrinsics = torch.cat((self.intrinsics, scene.intrinsics[curr_len:]), dim=0)
 
         pts, _, confs = scene.get_dense_pts3d(clean_depth=True)
-        for i in range(len(imgs)):
+        for i in range(curr_len, len(imgs)):
             mask = (confs[i] > conf_thres).reshape(-1).cpu()
             colors = torch.tensor(scene.imgs[i]).reshape(-1, 3)
             self.dense_pts.append(pts[i][mask])
