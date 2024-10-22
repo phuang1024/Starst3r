@@ -38,14 +38,11 @@ class Scene:
 
     cache_dir: str
 
-    def __init__(self, imgs: Optional[list[torch.Tensor]] = None, cache_dir: Optional[str] = None):
+    def __init__(self, cache_dir: Optional[str] = None):
         """Initialize a new scene.
 
         Parameters
         ----------
-
-        imgs:
-            Starting GT images. If None, then no images are added now.
 
         cache_dir:
             Tmp dir. If None, a new one is created via tempfile.
@@ -61,9 +58,6 @@ class Scene:
         self.cache_dir = cache_dir
         if cache_dir is None:
             self.cache_dir = tempfile.mkdtemp()
-
-        if imgs is not None:
-            self.add_images(imgs)
 
     @property
     def dense_pts_flat(self):
@@ -120,17 +114,24 @@ class Scene:
         self.optim_params = optim_params
 
         curr_len = len(self.imgs)
-        self.imgs.extend(scene.imgs)
+        self.imgs.extend(scene.imgs[curr_len:])
+
+        # TODO: New images should not completely replace previous points.
+        # A coordinate system shift is needed as new Mast3r instance could be different.
 
         if self.c2w is None:
             self.c2w = scene.cam2w
             self.intrinsics = scene.intrinsics
+        """
         else:
             self.c2w = torch.cat((self.c2w, scene.cam2w[curr_len:]), dim=0)
             self.intrinsics = torch.cat((self.intrinsics, scene.intrinsics[curr_len:]), dim=0)
+        """
 
         pts, _, confs = scene.get_dense_pts3d(clean_depth=True)
-        for i in range(curr_len, len(imgs)):
+        self.dense_pts = []
+        self.dense_cols = []
+        for i in range(len(scene.imgs)):
             mask = (confs[i] > conf_thres).reshape(-1).cpu()
             colors = torch.tensor(scene.imgs[i]).reshape(-1, 3)
             self.dense_pts.append(pts[i][mask])
