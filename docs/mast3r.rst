@@ -35,18 +35,22 @@ See the docs for return and argument specifications.
 
 Load the PyTorch model and run the reconstruction pipeline.
 
-Due to Mast3r legacy code, the pipeline requires a list of image file paths.
-
 .. code-block:: python
 
    # Load model from file
    model = starster.Mast3rModel.from_pretrained("/path/to/model.pth").to(device)
 
-   # Reconstruct scene
-   scene = starster.reconstruct_scene(model, imgs, files, device)
+   # Create empty scene
+   scene = starster.Scene()
 
-:func:`starster.reconstruct_scene` returns a :class:`starster.PointCloudScene` object,
-which contains the point clouds, camera poses, and more information.
+   # Add images and reconstruct.
+   scene.add_images(model, images)
+
+The :class:`starster.Scene` object contains the dense points, camera poses, and 3DGS
+methods (see 3DGS).
+
+You can use multiple calls of ``add_images`` on the same scene object. This and progressively
+reconstructs a scene, using all previous images in each iteration.
 
 3. Use the results
 ^^^^^^^^^^^^^^^^^^
@@ -60,9 +64,8 @@ Regardless, all XYZ coordinates are in the same global space.
    # (copied from quickstart)
 
    # Dense point clouds from each camera (in global XYZ space)
-   all_pts = scene.pts_dense()
-   for i in range(len(all_pts)):
-       pts, colors = all_pts[i]
+   for i in range(len(scene.dense_pts)):
+       pts, colors = scene.dense_pts[i], scene.dense_cols[i]
 
        # Point cloud: pts shape is (N, 3); XYZ of each point.
        print(f"Points from camera {i}: {pts.shape}")
@@ -71,13 +74,8 @@ Regardless, all XYZ coordinates are in the same global space.
        print(f"Colors from camera {i}: {colors.shape}")
 
    # Dense points from all cameras concatenated together
-   pts, colors = scene.pts_dense_flat()
+   pts, colors = scene.dense_pts_flat, scene.dense_cols_flat
    print("Total points from all cameras:", pts.shape)
-
-   # Sparse points (fewer points than dense)
-   pts_sparse, colors_sparse = scene.pts_sparse()
-   all_pts_sparse = scene.pts_sparse_flat()
-   # ... and process similarly
 
 About Mast3r
 ------------

@@ -6,10 +6,8 @@ Mast3r inference
 
 .. autoclass:: starster.Mast3rModel
 
-.. autoclass:: starster.PointCloudScene
+.. autoclass:: starster.Scene
    :members:
-
-.. autofunction:: starster.reconstruct_scene
 
 3DGS refinement
 ---------------

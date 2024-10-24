@@ -46,8 +46,7 @@ def infer_model(context):
     print("Reconstruct.")
     model = starster.Mast3rModel.from_pretrained(model_path).to(DEVICE)
     recons = starster.Scene()
-    recons.add_images(model, images[:3], DEVICE)
-    recons.add_images(model, images[3:], DEVICE)
+    recons.add_images(model, images)
 
     return recons
 
