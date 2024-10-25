@@ -11,6 +11,7 @@ from typing import Any, Optional
 
 import gsplat
 import torch
+from torchmetrics.image import StructuralSimilarityIndexMeasure as SSIM
 from tqdm import trange
 
 from .reconstruct import reconstruct_scene
@@ -45,7 +46,7 @@ class Scene:
     gs_strategy: Any
     gs_state: Any
 
-    def __init__(self, cache_dir: Optional[str] = None, device: str = "cuda"):
+    def __init__(self, cache_dir: Optional[str] = None, device="cuda"):
         """Initialize a new scene.
 
         Parameters
@@ -76,8 +77,6 @@ class Scene:
         self.gs_optims = None
         self.gs_strategy = None
         self.gs_state = None
-
-        self.ssim = SSIM(data_range=1).to(self.device)
 
     @property
     def dense_pts_flat(self):
@@ -180,6 +179,8 @@ class Scene:
 
         # Create optimizers
         self.optimizers = {k: torch.optim.Adam([v], lr=lr) for k, v in self.gaussians.items()}
+
+        self.ssim = SSIM(data_range=1).to(self.device)
 
         # Create pruning strategy
         # Using MC strategy bc DefaultStrategy has a bug.

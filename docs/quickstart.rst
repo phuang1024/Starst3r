@@ -19,7 +19,6 @@ Reconstruct:
       "/path/to/img1.jpg",
       ...
    )
-
    # Load images with specified resolution (default 224)
    imgs = starster.load_images(files, size=224)
 
@@ -27,16 +26,16 @@ Reconstruct:
    model = starster.Mast3rModel.from_pretrained("/path/to/model.pth").to(device)
 
    # Reconstruct scene
-   scene = starster.reconstruct_scene(model, imgs, files, device)
+   scene = starster.Scene()
+   scene.add_images(model, images)
 
 Use results:
 
 .. code-block:: python
 
    # Dense point clouds from each camera (in global XYZ space)
-   all_pts = scene.pts_dense()
-   for i in range(len(all_pts)):
-       pts, colors = all_pts[i]
+   for i in range(len(scene.dense_pts)):
+       pts, colors = scene.dense_pts[i], scene.dense_cols[i]
 
        # Point cloud: pts shape is (N, 3); XYZ of each point.
        print(f"Points from camera {i}: {pts.shape}")
@@ -45,13 +44,8 @@ Use results:
        print(f"Colors from camera {i}: {colors.shape}")
 
    # Dense points from all cameras concatenated together
-   pts, colors = scene.pts_dense_flat()
+   pts, colors = scene.dense_pts_flat, scene.dense_cols_flat
    print("Total points from all cameras:", pts.shape)
-
-   # Sparse points (fewer points than dense)
-   pts_sparse, colors_sparse = scene.pts_sparse()
-   all_pts_sparse = scene.pts_sparse_flat()
-   # ... and process similarly
 
 3D Gaussian Splatting refinement
 --------------------------------
