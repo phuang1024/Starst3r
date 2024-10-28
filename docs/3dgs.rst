@@ -3,43 +3,38 @@
 
 3D Gaussian Splatting (3DGS) refines a 3D scene for visual quality.
 
-In this library, it uses the Mast3r reconstruction as a starting point,
-dramatically improving speed.
+In this library, it uses the Mast3r reconstruction as a starting point.
 
 Tutorial
 --------
 
-1. Setup trainer
-^^^^^^^^^^^^^^^^
+1. Run optimization
+^^^^^^^^^^^^^^^^^^^
 
-Create a trainer object after reconstructing a scene with Mast3r.
+Run initialization, and optimization.
+
+You need a Mast3r reconstruction as a starting point.
 
 See :ref:`Mast3r reconstruction`.
 
 .. code-block:: python
 
-   # See Mast3r tutorials.
-   scene = starster.reconstruct_scene(...)
+   # See Mast3r tutorial
+   scene = ...
+   ...
 
-   # Create trainer
-   gs = starster.GSTrainer(scene, device=device)
-
-2. Run optimization
-^^^^^^^^^^^^^^^^^^^
-
-Run optimization, pruning, and densification.
-
-.. code-block:: python
+   # Initialize gaussians
+   scene.init_3dgs()
 
    # Run 3DGS optimization for 500 iters
-   gs.run_optimization(500, enable_pruning=True, verbose=True)
+   scene.run_3dgs_optim(500, enable_pruning=True, verbose=True)
    # Run without pruning and densification
-   gs.run_optimization(100, enable_pruning=False, verbose=True)
+   scene.run_3dgs_optim(100, enable_pruning=False, verbose=True)
 
-3. Render views
+2. Render views
 ^^^^^^^^^^^^^^^
 
-Render views from the refined scene.
+Render views from the refined 3DGS scene.
 
 .. code-block:: python
 
@@ -47,10 +42,10 @@ Render views from the refined scene.
 
    # Render views from original camera poses
    # img (color image render) has shape (N, H, W, 3).
-   img, alpha, info = gs.render_views_original(width, height)
+   img, alpha, info = scene.render_3dgs_original(width, height)
 
    # Render from new camera poses
-   img, alpha, info = gs.render_views(world_to_cam, intrinsics, width, height)
+   img, alpha, info = gs.render_3dgs(world_to_cam, intrinsics, width, height)
 
 About 3DGS
 ----------

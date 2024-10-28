@@ -52,22 +52,23 @@ Use results:
 
 .. code-block:: python
 
-   # See above
-   scene = starster.reconstruct_scene(...)
+   # Extend from Mast3r scene. See above
+   scene = ...
 
-   gs = starster.GSTrainer(scene, device=device)
+   # Initialize gaussians
+   scene.init_3dgs()
 
    width, height = 224, 224
    # Render views from original camera poses
    # img (color image render) has shape (N, H, W, 3).
-   img, alpha, info = gs.render_views_original(width, height)
+   img, alpha, info = scene.render_3dgs_original(width, height)
    # Render from new camera poses
-   img, alpha, info = gs.render_views(world_to_cam, intrinsics, width, height)
+   img, alpha, info = scene.render_3dgs(world_to_cam, intrinsics, width, height)
 
    # Run 3DGS optimization for 1000 iters
-   gs.run_optimization(1000, enable_pruning=True, verbose=True)
+   scene.run_3dgs_optim(1000, enable_pruning=True, verbose=True)
    # Run without pruning and densification
-   gs.run_optimization(5000, enable_pruning=False, verbose=True)
+   scene.run_3dgs_optim(5000, enable_pruning=False, verbose=True)
 
    # Render again with refined splats
-   img, alpha, info = gs.render_views_original(width, height)
+   img, alpha, info = scene.render_3dgs_original(width, height)
