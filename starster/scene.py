@@ -135,10 +135,11 @@ class Scene:
         # TODO: New images should not completely replace previous points.
         # A coordinate system shift is needed as new Mast3r instance could be different.
 
-        if self.c2w is None:
-            self.c2w = scene.cam2w
-            self.intrinsics = scene.intrinsics
+        self.c2w = scene.cam2w
+        self.intrinsics = scene.intrinsics
         """
+        if self.c2w is None:
+            pass
         else:
             self.c2w = torch.cat((self.c2w, scene.cam2w[curr_len:]), dim=0)
             self.intrinsics = torch.cat((self.intrinsics, scene.intrinsics[curr_len:]), dim=0)

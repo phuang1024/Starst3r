@@ -61,12 +61,12 @@ for i, pts in enumerate(scene.pts3d):
 print(len(scene.pts3d), scene.pts3d[0].shape)
 """
 
-"""
 import numpy as np
 import cv2
 
-gs = starster.GSTrainer(scene)
+scene.init_3dgs()
 
+"""
 # Show progress.
 for i in range(50):
     imgs, alpha, info = gs.render_views_original(RES, RES)
@@ -77,14 +77,12 @@ for i in range(50):
     gs.run_optimization(10, enable_pruning=True, verbose=True)
 
 """
-"""
-gs.run_optimization(400, enable_pruning=True, verbose=True)
-gs.run_optimization(100, enable_pruning=False, verbose=True)
+scene.run_3dgs_optim(400, enable_pruning=True, verbose=True)
+scene.run_3dgs_optim(100, enable_pruning=False, verbose=True)
 
-imgs, alpha, info = gs.render_views_original(RES, RES)
+imgs, alpha, info = scene.render_3dgs_original(RES, RES)
 print(imgs.shape)
 imgs = torch.clip(imgs.detach().cpu(), 0, 1)
 imgs = (imgs.numpy()[..., ::-1] * 255).astype(np.uint8)
 for i, img in enumerate(imgs):
     cv2.imwrite(f"{i}.png", img)
-"""
