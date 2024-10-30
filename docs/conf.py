@@ -9,7 +9,7 @@
 project = 'Starst3r'
 copyright = '2024, Patrick Huang'
 author = 'Patrick Huang'
-release = '0.4.0'
+release = '0.5.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
