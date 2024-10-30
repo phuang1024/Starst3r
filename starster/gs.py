@@ -11,7 +11,7 @@ from torchmetrics.image import StructuralSimilarityIndexMeasure as SSIM
 from tqdm import trange
 
 
-def init_3dgs(scene, init_scale=1e-3, lr=1e-3):
+def init_3dgs(scene, init_scale=3e-3, lr=1e-3):
     """Initialize 3DGS splats and optims from Mast3r dense points.
     """
 

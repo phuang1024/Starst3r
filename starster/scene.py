@@ -154,7 +154,7 @@ class Scene:
             self.dense_pts.append(pts[i][mask])
             self.dense_cols.append(colors[mask])
 
-    def init_3dgs(self, init_scale=1e-3, lr=1e-3):
+    def init_3dgs(self, init_scale=3e-3, lr=1e-3):
         init_3dgs(self, init_scale, lr)
 
     def render_3dgs(self, w2c, intrinsics, width, height):
