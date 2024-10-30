@@ -1,9 +1,8 @@
-"""
-3D Gaussian Splatting scene refinement.
-"""
-
 __all__ = (
-    "GSTrainer",
+    "init_3dgs",
+    "render_3dgs",
+    "render_3dgs_original",
+    "run_3dgs_optim",
 )
 
 import gsplat
@@ -11,197 +10,157 @@ import torch
 from torchmetrics.image import StructuralSimilarityIndexMeasure as SSIM
 from tqdm import trange
 
-from .scene import PointCloudScene
 
-
-class GSTrainer:
-    """3DGS training and refinement.
-
-    Uses gsplat for rendering and optimization.
-
-    Uses the Mast3r reconstruction as a starting point.
+def init_3dgs(scene, init_scale=3e-3, lr=1e-3):
+    """Initialize 3DGS splats and optims from Mast3r dense points.
     """
 
-    def __init__(
-            self,
-            scene: PointCloudScene,
-            init_scale=3e-3,
-            lr=1e-3,
-            loss_ssim_fac=0.2,
-            loss_opacity_fac=0.01,
-            loss_scale_fac=0.01,
-            device: str = "cuda"
-        ):
-        """Initialize the splats and optimizers from the Mast3r reconstruction.
+    pts = scene.dense_pts_flat
+    colors = scene.dense_cols_flat
+    scene.gaussians = {
+        "means": pts,
+        "scales": torch.full_like(pts, init_scale),
+        "quats": torch.zeros(pts.shape[0], 4),
+        "opacities": torch.ones(pts.shape[0]),
+        "sh0": torch.zeros(pts.shape[0], 1, 3),
+        "shN": torch.zeros(pts.shape[0], 24, 3),
+    }
+    scene.gaussians["quats"][:, 0] = 1.0
+    scene.gaussians["sh0"][:, 0] = 1 - colors
+    for i in range(24):
+        scene.gaussians["shN"][:, i] = 1 - colors
 
-        Parameters
-        ----------
+    for k, v in scene.gaussians.items():
+        scene.gaussians[k] = torch.nn.Parameter(v.to(scene.device))
 
-        scene:
-            Reconstructed scene from Mast3r.
-            Return value of :func:`starster.reconstruct_scene`.
+    # Create optimizers
+    scene.optimizers = {k: torch.optim.Adam([v], lr=lr) for k, v in scene.gaussians.items()}
 
-        init_scale:
-            Initial scale of the splats.
+    scene.ssim = SSIM(data_range=1).to(scene.device)
 
-        lr:
-            Learning rate for Adam optimizers.
+    # Create pruning strategy
+    # Using MC strategy bc DefaultStrategy has a bug.
+    scene.strategy = gsplat.MCMCStrategy()
+    scene.strategy.check_sanity(scene.gaussians, scene.optimizers)
+    scene.strategy_state = scene.strategy.initialize_state()
 
-        loss_ssim_fac:
-            Factor for the SSIM loss.
+def render_3dgs(scene, w2c: torch.Tensor, intrinsics: torch.Tensor, width: int, height: int):
+    """Render the splats from a set of camera views.
 
-        loss_opacity_fac:
-            Factor for the opacity loss.
+    TODO currently width and height can only be the original image size.
 
-        loss_scale_fac:
-            Factor for the scale loss.
+    Parameters
+    ----------
 
-        device:
-            Device to use.
-        """
-        self.scene = scene
-        self.device = device
+    w2c:
+        World-to-camera matrices. Shape (N, 4, 4).
 
-        # Create splats
-        pts, colors = self.scene.pts_dense_flat()
-        self.gaussians = {
-            "means": pts,
-            "scales": torch.full_like(pts, init_scale),
-            "quats": torch.zeros(pts.shape[0], 4),
-            "opacities": torch.ones(pts.shape[0]),
-            "sh0": torch.zeros(pts.shape[0], 1, 3),
-            "shN": torch.zeros(pts.shape[0], 24, 3),
-        }
-        self.gaussians["quats"][:, 0] = 1.0
-        self.gaussians["sh0"][:, 0] = 1 - colors
-        for i in range(24):
-            self.gaussians["shN"][:, i] = 1 - colors
+    intrinsics:
+        Camera intrinsics. Shape (N, 3, 3).
 
-        for k, v in self.gaussians.items():
-            self.gaussians[k] = torch.nn.Parameter(v.to(self.device))
+    width:
+        Image width.
 
-        # Create optimizers
-        self.optimizers = {k: torch.optim.Adam([v], lr=lr) for k, v in self.gaussians.items()}
+    height:
+        Image height.
 
-        # Create pruning strategy
-        # Using MC strategy bc DefaultStrategy has a bug.
-        self.strategy = gsplat.MCMCStrategy()
-        self.strategy.check_sanity(self.gaussians, self.optimizers)
-        self.strategy_state = self.strategy.initialize_state()
+    Returns
+    -------
 
-        # Create required losses
-        self.loss_ssim_fac = loss_ssim_fac
-        self.loss_opacity_fac = loss_opacity_fac
-        self.loss_scale_fac = loss_scale_fac
+    Output of ``gsplat.rasterization``.
 
-        self.ssim = SSIM(data_range=1).to(self.device)
+    Tuple of ``(render_img, render_alpha, info)``.
 
-    def render_views(self, w2c: torch.Tensor, intrinsics: torch.Tensor, width: int, height: int):
-        """Render the splats from a set of camera views.
+    - render_img: Color image. Shape (N, H, W, 3).
+    """
+    render = gsplat.rasterization(
+        means=scene.gaussians["means"],
+        quats=scene.gaussians["quats"],
+        scales=scene.gaussians["scales"],
+        opacities=scene.gaussians["opacities"],
+        colors=scene.gaussians["shN"],
+        viewmats=w2c,
+        Ks=intrinsics,
+        width=width,
+        height=height,
+        sh_degree=1,
+    )
+    return render
 
-        Parameters
-        ----------
+def render_3dgs_original(scene, width: int, height: int):
+    """Render from camera views of original scene (``scene.scene``).
 
-        w2c:
-            World-to-camera matrices. Shape (N, 4, 4).
+    See ``render_views``.
+    """
+    return scene.render_3dgs(scene.w2c, scene.intrinsics, width, height)
 
-        intrinsics:
-            Camera intrinsics. Shape (N, 3, 3).
+def run_3dgs_optim(
+        scene,
+        iters: int,
+        enable_pruning: bool = False,
+        loss_ssim_fac=0.2,
+        loss_opacity_fac=0.01,
+        loss_scale_fac=0.01,
+        verbose: bool = False,
+    ) -> list[float]:
+    """Run 3DGS optimization and pruning (optional) for a number of iterations.
 
-        width:
-            Image width.
+    Parameters
+    ----------
 
-        height:
-            Image height.
+    iters:
+        Number of iterations.
 
-        Returns
-        -------
+    enable_pruning:
+        Enable pruning and densification via the gsplat pruning strategy.
 
-        Output of ``gsplat.rasterization``.
+    verbose:
+        Enable tqdm progress bar.
 
-        Tuple of ``(render_img, render_alpha, info)``.
+    Returns
+    -------
 
-        - render_img: Color image. Shape (N, H, W, 3).
-        """
-        render = gsplat.rasterization(
-            means=self.gaussians["means"],
-            quats=self.gaussians["quats"],
-            scales=self.gaussians["scales"],
-            opacities=self.gaussians["opacities"],
-            colors=self.gaussians["shN"],
-            viewmats=w2c,
-            Ks=intrinsics,
-            width=width,
-            height=height,
-            sh_degree=1,
-        )
-        return render
+    List of losses at each iteration.
+    """
 
-    def render_views_original(self, width: int, height: int):
-        """Render from camera views of original scene (``self.scene``).
-
-        See ``render_views``.
-        """
-        return self.render_views(self.scene.w2c(), self.scene.intrinsics(), width, height)
-
-    def compute_loss(self, truth_img, render_img, render_alpha):
+    def compute_loss(truth_img, render_img, render_alpha):
         l1 = torch.nn.functional.l1_loss(truth_img, render_img)
 
-        ssim = 1 - self.ssim(truth_img.permute(2, 0, 1).unsqueeze(0), render_img.permute(2, 0, 1).unsqueeze(0))
-        loss = l1 * (1 - self.loss_ssim_fac) + ssim * self.loss_ssim_fac
+        ssim = 1 - scene.ssim(truth_img.permute(2, 0, 1).unsqueeze(0), render_img.permute(2, 0, 1).unsqueeze(0))
+        loss = l1 * (1 - loss_ssim_fac) + ssim * loss_ssim_fac
 
-        loss += self.loss_opacity_fac * torch.abs(torch.sigmoid(self.gaussians["opacities"])).mean()
+        loss += loss_opacity_fac * torch.abs(torch.sigmoid(scene.gaussians["opacities"])).mean()
 
-        loss += self.loss_scale_fac * torch.abs(torch.exp(self.gaussians["scales"])).mean()
+        loss += loss_scale_fac * torch.abs(torch.exp(scene.gaussians["scales"])).mean()
 
         return loss
 
-    def run_optimization(self, iters: int, enable_pruning: bool = False, verbose: bool = False) -> list[float]:
-        """Run 3DGS optimization and pruning (optional) for a number of iterations.
+    height, width = scene.imgs[0].shape[:2]
 
-        Parameters
-        ----------
+    losses = []
 
-        iters:
-            Number of iterations.
+    pbar = trange(iters, disable=not verbose)
+    for step in pbar:
+        render_img, render_alpha, info = scene.render_3dgs_original(width, height)
 
-        enable_pruning:
-            Enable pruning and densification via the gsplat pruning strategy.
+        if enable_pruning:
+            scene.strategy.step_pre_backward(scene.gaussians, scene.optimizers, scene.strategy_state, step, info)
 
-        verbose:
-            Enable tqdm progress bar.
+        loss = 0
+        for i in range(len(scene.imgs)):
+            img = torch.tensor(scene.imgs[i], device=scene.device)
+            loss += compute_loss(img, render_img[i], render_alpha[i])
+        loss.backward()
 
-        Returns
-        -------
+        desc = f"Gsplat optimization: loss={loss.item()}"
+        pbar.set_description(desc)
+        losses.append(loss.item())
 
-        List of losses at each iteration.
-        """
-        height, width = self.scene.imgs[0].shape[:2]
+        for optim in scene.optimizers.values():
+            optim.step()
+            optim.zero_grad(set_to_none=True)
 
-        losses = []
+        if enable_pruning:
+            scene.strategy.step_post_backward(scene.gaussians, scene.optimizers, scene.strategy_state, step, info, 1e-3)
 
-        pbar = trange(iters, disable=not verbose)
-        for step in pbar:
-            render_img, render_alpha, info = self.render_views_original(width, height)
-
-            if enable_pruning:
-                self.strategy.step_pre_backward(self.gaussians, self.optimizers, self.strategy_state, step, info)
-
-            loss = 0
-            for i in range(self.scene.num_cams):
-                img = torch.tensor(self.scene.imgs[i], device=self.device)
-                loss += self.compute_loss(img, render_img[i], render_alpha[i])
-            loss.backward()
-
-            desc = f"Gsplat optimization: loss={loss.item()}"
-            pbar.set_description(desc)
-            losses.append(loss.item())
-
-            for optim in self.optimizers.values():
-                optim.step()
-                optim.zero_grad(set_to_none=True)
-
-            if enable_pruning:
-                self.strategy.step_post_backward(self.gaussians, self.optimizers, self.strategy_state, step, info, 1e-3)
-
-        return losses
+    return losses

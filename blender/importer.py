@@ -45,7 +45,8 @@ def infer_model(context):
 
     print("Reconstruct.")
     model = starster.Mast3rModel.from_pretrained(model_path).to(DEVICE)
-    recons = starster.reconstruct_scene(model, images, filepaths, DEVICE, tmp_dir)
+    recons = starster.Scene()
+    recons.add_images(model, images)
 
     return recons
 
@@ -57,7 +58,8 @@ def make_mesh(context, recons, dupli=False):
     props = context.scene.starster
     dsize = props.dupli_size
 
-    pts, colors = recons.pts_dense_flat()
+    pts = recons.dense_pts_flat
+    colors = recons.dense_cols_flat
 
     num_verts = pts.shape[0]
     if props.import_as == "DUPLI":

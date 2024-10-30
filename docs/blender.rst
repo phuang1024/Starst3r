@@ -9,6 +9,9 @@ interface.
    The Blender add-on is still in development.
    Features and quality will improve over time.
 
+   Please SAVE YOUR WORK before using. The reconstruction process will freeze
+   Blender for a while.
+
 See :ref:`Blender installation` for installation instructions.
 
 Reconstruction
